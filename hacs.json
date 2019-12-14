@@ -1,0 +1,5 @@
+{
+  "name": "Indoor Air Quality UK Index",
+  "domains": ["iaquk", "sensor"],
+  "iot_class": "Local Push"
+}

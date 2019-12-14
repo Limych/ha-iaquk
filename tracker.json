@@ -1,0 +1,10 @@
+{
+    "beward": {
+        "version": "",
+        "local_location": "/custom_components/iaquk/__init__.py",
+        "remote_location": "https://raw.githubusercontent.com/Limych/ha-iaquk/master/custom_components/iaquk/__init__.py",
+        "visit_repo": "https://github.com/Limych/ha-iaquk",
+        "changelog": "https://github.com/Limych/ha-iaquk/releases/latest",
+        "resources": []
+    }
+}
