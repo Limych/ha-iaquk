@@ -23,3 +23,5 @@ labels:
     color: "cfd3d7"
   - name: "invalid"
     color: "e4e669"
+  - name: "more-information-needed"
+    color: "dd9c2c"
