@@ -15,13 +15,15 @@ from homeassistant.const import CONF_NAME, CONF_SENSORS
 from homeassistant.helpers import discovery
 
 from .const import DOMAIN, VERSION, ISSUE_URL, SUPPORT_LIB_URL, CONF_SOURCES, \
-    DATA_IAQUK
+    DATA_IAQUK, CONF_CO2, CONF_TEMPERATURE, CONF_HUMIDITY
 from .sensor import SENSORS
 
 _LOGGER = logging.getLogger(__name__)
 
 SOURCES_SCHEMA = vol.Schema({
-    vol.Optional(...)
+    vol.Optional(CONF_TEMPERATURE): cv.entity_id,
+    vol.Optional(CONF_HUMIDITY): cv.entity_id,
+    vol.Optional(CONF_CO2): cv.entity_id,
 })
 
 IAQ_SCHEMA = vol.Schema({
