@@ -2,10 +2,8 @@
 
 import logging
 
-from homeassistant.const import CONF_NAME, CONF_SENSORS
+from homeassistant.const import CONF_SENSORS
 from homeassistant.helpers.entity import Entity
-
-from .const import DATA_IAQUK
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,15 +16,15 @@ SENSORS = {
 }
 
 
-async def async_setup_platform(hass, config, async_add_entities,
+async def async_setup_platform(hass, config, async_add_entities,    # pylint: disable=w0613
                                discovery_info=None):
     """Set up a sensors to calculate IAQ UK index."""
     if discovery_info is None:
         return
 
-    controller = hass.data[DATA_IAQUK][discovery_info[CONF_NAME]]
+    # controller = hass.data[DATA_IAQUK][discovery_info[CONF_NAME]]
 
-    sensors = discovery_info[CONF_SENSORS]
+    # sensors = discovery_info[CONF_SENSORS]
 
     sensors = []
     for sensor_type in discovery_info[CONF_SENSORS]:
@@ -38,4 +36,5 @@ async def async_setup_platform(hass, config, async_add_entities,
 class IaqukSensor(Entity):
     """IAQ UK sensor."""
 
-    def __init__(self, hass, entity_id: str, name: str, sources):
+    def __init__(self, sensor_type: str):
+        pass    # todo   pylint: disable=w0511

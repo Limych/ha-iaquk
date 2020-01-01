@@ -1,10 +1,14 @@
 {
-    "beward": {
-        "version": "",
+    "iaquk": {
+        "version": "0.0.1",
         "local_location": "/custom_components/iaquk/__init__.py",
         "remote_location": "https://raw.githubusercontent.com/Limych/ha-iaquk/master/custom_components/iaquk/__init__.py",
         "visit_repo": "https://github.com/Limych/ha-iaquk",
         "changelog": "https://github.com/Limych/ha-iaquk/releases/latest",
-        "resources": []
+        "resources": [
+            "https://raw.githubusercontent.com/Limych/ha-iaquk/master/custom_components/iaquk/const.py",
+            "https://raw.githubusercontent.com/Limych/ha-iaquk/master/custom_components/iaquk/manifest.json",
+            "https://raw.githubusercontent.com/Limych/ha-iaquk/master/custom_components/iaquk/sensor.py"
+        ]
     }
 }

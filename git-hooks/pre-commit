@@ -1,3 +1,0 @@
-#!/bin/sh
-python "$GIT_WORK_TREE/update_tracker.py"
-git add tracker.json
