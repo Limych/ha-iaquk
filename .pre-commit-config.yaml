@@ -3,7 +3,7 @@ repos:
     hooks:
       - id: update-tracker
         name: "Update Tracker"
-        entry: "./update_tracker.py"
+        entry: ./update_tracker.py
         language: system
       - id: pylint
         name: pylint
