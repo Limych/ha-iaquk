@@ -12,10 +12,13 @@ from typing import Optional
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.sensor import DOMAIN as SENSOR
-from homeassistant.const import CONF_NAME, CONF_SENSORS, EVENT_HOMEASSISTANT_START
-from homeassistant.core import callback
+from homeassistant.const import CONF_NAME, CONF_SENSORS, EVENT_HOMEASSISTANT_START, \
+    ATTR_UNIT_OF_MEASUREMENT, TEMP_CELSIUS, TEMP_FAHRENHEIT, UNIT_NOT_RECOGNIZED_TEMPLATE, \
+    TEMPERATURE
+from homeassistant.core import callback, State
 from homeassistant.helpers import discovery
 from homeassistant.helpers.event import async_track_state_change
+from homeassistant.util.temperature import convert as convert_temperature
 
 from .const import DOMAIN, VERSION, ISSUE_URL, SUPPORT_LIB_URL, CONF_SOURCES, \
     DATA_IAQUK, CONF_CO2, CONF_TEMPERATURE, CONF_HUMIDITY, CONF_TVOC, LEVEL_INADEQUATE, \
@@ -89,13 +92,16 @@ async def async_setup(hass, config):
     return True
 
 
-def get_number(value):
+def get_number_state(value):
     """Convert value to number."""
+    if not isinstance(value, State):
+        return None
+    value = value.state
     if isinstance(value, numbers.Number):
         return value
     try:
         return float(value)
-    except:     # pylint: disable=w0702
+    except:  # pylint: disable=w0702
         return None
 
 
@@ -189,10 +195,21 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = get_number(self._hass.states.get(entity_id).state)
+        entity = self._hass.states.get(entity_id)
+        value = get_number_state(entity)
         _LOGGER.debug('[%s] temperature=%s', self._entity_id, value)
         if value is None:
             return None
+
+        entity_unit = entity.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
+        if entity_unit not in (TEMP_CELSIUS, TEMP_FAHRENHEIT):
+            raise ValueError(
+                UNIT_NOT_RECOGNIZED_TEMPLATE.format(entity_unit,
+                                                    TEMPERATURE))
+
+        if entity_unit != TEMP_CELSIUS:
+            value = convert_temperature(
+                value, entity_unit, TEMP_CELSIUS)
 
         index = 1
         if 18 <= value <= 21:
@@ -214,7 +231,7 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = get_number(self._hass.states.get(entity_id).state)
+        value = get_number_state(self._hass.states.get(entity_id))
         _LOGGER.debug('[%s] humidity=%s', self._entity_id, value)
         if value is None:
             return None
@@ -239,7 +256,7 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = get_number(self._hass.states.get(entity_id).state)
+        value = get_number_state(self._hass.states.get(entity_id))
         _LOGGER.debug('[%s] CO2=%s', self._entity_id, value)
         if value is None:
             return None
@@ -264,7 +281,7 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = get_number(self._hass.states.get(entity_id).state)
+        value = get_number_state(self._hass.states.get(entity_id))
         _LOGGER.debug('[%s] tVOC=%s', self._entity_id, value)
         if value is None:
             return None

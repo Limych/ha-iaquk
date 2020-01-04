@@ -1,6 +1,6 @@
-## Features:
+This component allows you to evaluate the air quality in any room, using data from various sensors installed there. Such as temperature, humidity, carbon dioxide sensors, etc.
 
-- 
+![](iaquk.jpg)
 
 ## Links
 

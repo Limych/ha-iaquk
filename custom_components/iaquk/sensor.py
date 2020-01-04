@@ -1,14 +1,17 @@
 """Sensor platform to calculate IAQ UK index."""
 
 import logging
-from typing import Optional, Union, Dict, Any
+from typing import Optional, Union
 
-from homeassistant.const import CONF_SENSORS, CONF_NAME, ATTR_FRIENDLY_NAME
-from homeassistant.helpers.entity import Entity
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
+from homeassistant.const import CONF_SENSORS, CONF_NAME
+from homeassistant.helpers.entity import Entity, async_generate_entity_id
 
 from .const import DATA_IAQUK, LEVEL_INADEQUATE, LEVEL_POOR, LEVEL_GOOD, LEVEL_EXCELLENT
 
 _LOGGER = logging.getLogger(__name__)
+
+ENTITY_ID_FORMAT = SENSOR_DOMAIN + ".{}"
 
 SENSOR_INDEX = 'iaq_index'
 SENSOR_LEVEL = 'iaq_level'
@@ -43,8 +46,10 @@ class IaqukSensor(Entity):
         self._hass = hass
         self._controller = controller
         self._sensor_type = sensor_type
-        self._name = "%s %s" % (self._controller.name, SENSORS[self._sensor_type])
         self._unique_id = "%s_%s" % (self._controller.unique_id, self._sensor_type)
+        self._name = "%s %s" % (self._controller.name, SENSORS[self._sensor_type])
+
+        self.entity_id = async_generate_entity_id(ENTITY_ID_FORMAT, self._unique_id, hass=hass)
 
     async def async_added_to_hass(self):
         """Register callbacks."""
@@ -58,12 +63,7 @@ class IaqukSensor(Entity):
     @property
     def name(self) -> Optional[str]:
         """Return the name of the sensor."""
-        return self._unique_id
-
-    @property
-    def should_poll(self) -> bool:
-        """Return the polling state."""
-        return False
+        return self._name
 
     @property
     def icon(self) -> Optional[str]:
@@ -86,12 +86,11 @@ class IaqukSensor(Entity):
     @property
     def state(self) -> Union[None, str, int, float]:
         """Return the state of the sensor."""
-        return self._controller.__getattribute__(self._sensor_type)
+        return self._controller.iaq_index if self._sensor_type == SENSOR_INDEX \
+            else self._controller.iaq_level
 
     @property
-    def state_attributes(self) -> Optional[Dict[str, Any]]:
-        """Return the state attributes."""
-        attrs = {
-            ATTR_FRIENDLY_NAME: self._name,
-        }
-        return attrs
+    def unit_of_measurement(self) -> Optional[str]:
+        """Return the unit of measurement of this entity, if any."""
+        return 'IAQI' if self._sensor_type == SENSOR_INDEX \
+            else None
