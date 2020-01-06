@@ -23,7 +23,7 @@ from homeassistant.util.temperature import convert as convert_temperature
 from .const import DOMAIN, VERSION, ISSUE_URL, SUPPORT_LIB_URL, CONF_SOURCES, \
     DATA_IAQUK, CONF_CO2, CONF_TEMPERATURE, CONF_HUMIDITY, CONF_TVOC, LEVEL_INADEQUATE, \
     LEVEL_POOR, LEVEL_FAIR, LEVEL_GOOD, LEVEL_EXCELLENT, CONF_PM03, CONF_PM05, CONF_PM1, \
-    CONF_PM25, CONF_PM5, CONF_PM10
+    CONF_PM25, CONF_PM5, CONF_PM10, CONF_NO2
 from .sensor import SENSORS
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,6 +32,7 @@ SOURCES = [
     CONF_TEMPERATURE,
     CONF_HUMIDITY,
     CONF_CO2,
+    CONF_NO2,
     CONF_TVOC,
     CONF_PM03,
     CONF_PM05,
@@ -219,13 +220,13 @@ class Iaquk:
                 value, entity_unit, TEMP_CELSIUS)
 
         index = 1
-        if 18 <= value <= 21:
+        if 18 <= value <= 21:           # °C
             index = 5
-        elif value > 16 or value < 23:
+        elif value > 16 or value < 23:  # °C
             index = 4
-        elif value > 15 or value < 24:
+        elif value > 15 or value < 24:  # °C
             index = 3
-        elif value > 14 or value < 25:
+        elif value > 14 or value < 25:  # °C
             index = 2
         return index
 
@@ -244,13 +245,13 @@ class Iaquk:
             return None
 
         index = 5
-        if value < 10 or value > 90:
+        if value < 10 or value > 90:    # %
             index = 1
-        elif value < 20 or value > 80:
+        elif value < 20 or value > 80:  # %
             index = 2
-        elif value < 30 or value > 70:
+        elif value < 30 or value > 70:  # %
             index = 3
-        elif value < 40 or value > 60:
+        elif value < 40 or value > 60:  # %
             index = 4
         return index
 
@@ -269,13 +270,13 @@ class Iaquk:
             return None
 
         index = 1
-        if value <= 600:
+        if value <= 600:        # ppm
             index = 5
-        elif value <= 800:
+        elif value <= 800:      # ppm
             index = 4
-        elif value <= 1500:
+        elif value <= 1500:     # ppm
             index = 3
-        elif value <= 1800:
+        elif value <= 1800:     # ppm
             index = 2
         return index
 
@@ -294,13 +295,13 @@ class Iaquk:
             return None
 
         index = 1
-        if value <= 65:
+        if value <= 65:     # ppb
             index = 5
-        elif value <= 220:
+        elif value <= 220:  # ppb
             index = 4
-        elif value <= 660:
+        elif value <= 660:  # ppb
             index = 3
-        elif value <= 2200:
+        elif value <= 2200: # ppb
             index = 2
         return index
 
@@ -319,9 +320,9 @@ class Iaquk:
             return None
 
         index = 1
-        if value <= 100000:
+        if value <= 100000:     # ug/m3
             index = 5
-        elif value <= 250000:
+        elif value <= 250000:   # ug/m3
             index = 3
         return index
 
@@ -340,9 +341,9 @@ class Iaquk:
             return None
 
         index = 1
-        if value <= 35200:
+        if value <= 35200:      # ug/m3
             index = 5
-        elif value <= 87500:
+        elif value <= 87500:    # ug/m3
             index = 3
         return index
 
@@ -361,9 +362,9 @@ class Iaquk:
             return None
 
         index = 1
-        if value <= 8320:
+        if value <= 8320:       # ug/m3
             index = 5
-        elif value <= 20800:
+        elif value <= 20800:    # ug/m3
             index = 3
         return index
 
@@ -382,9 +383,9 @@ class Iaquk:
             return None
 
         index = 1
-        if value <= 545:
+        if value <= 545:        # ug/m3
             index = 5
-        elif value <= 1362:
+        elif value <= 1362:     # ug/m3
             index = 3
         return index
 
@@ -403,9 +404,9 @@ class Iaquk:
             return None
 
         index = 1
-        if value <= 193:
+        if value <= 193:    # ug/m3
             index = 5
-        elif value <= 483:
+        elif value <= 483:  # ug/m3
             index = 3
         return index
 
@@ -424,8 +425,29 @@ class Iaquk:
             return None
 
         index = 1
-        if value <= 68:
+        if value <= 68:     # ug/m3
             index = 5
-        elif value <= 170:
+        elif value <= 170:  # ug/m3
+            index = 3
+        return index
+
+    @property
+    def _no2_index(self):
+        """Transform indoor NO2 values to IAQ points according
+        to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
+        entity_id = self._sources.get(CONF_TVOC)
+
+        if entity_id is None:
+            return None
+
+        value = get_number_state(self._hass.states.get(entity_id))
+        _LOGGER.debug('[%s] NO2=%s', self._entity_id, value)
+        if value is None:
+            return None
+
+        index = 1
+        if value <= 106:    # ppb
+            index = 5
+        elif value <= 213:  # ppb
             index = 3
         return index

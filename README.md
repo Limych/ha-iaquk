@@ -102,34 +102,48 @@ You can create as many groups as you need. But each group must have an unique na
   Dictionary of sensors involved in the calculations. At least one sensor must be specified.
 
 > **temperature**:\
-> Room temperature sensor entity ID.
+> Room temperature sensor entity ID.\
+> Required sensor's unit of measurement: °C or °F
 >
 > **humidity**:\
-> Room humidity sensor entity ID.
+> Room humidity sensor entity ID.\
+> Required sensor's unit of measurement: %
 >
 > **co2**:\
-> Room eCO2 sensor entity ID.
+> Room eCO2 sensor entity ID.\
+> Required sensor's unit of measurement: ppm
+>
+> **no2**:\
+> Room NO2 sensor entity ID.\
+> Required sensor's unit of measurement: ppb
 >
 > **tvoc**:\
-> Room tVOC sensor entity ID.
+> Room tVOC sensor entity ID.\
+> Required sensor's unit of measurement: ppb
 >
 > **pm03**:\
-> Room PM0.3 sensor entity ID.
+> Room PM0.3 sensor entity ID.\
+> Required sensor's unit of measurement: µg/m3
 >
 > **pm05**:\
-> Room PM0.5 sensor entity ID.
+> Room PM0.5 sensor entity ID.\
+> Required sensor's unit of measurement: µg/m3
 >
 > **pm1**:\
-> Room PM1.0 sensor entity ID.
+> Room PM1.0 sensor entity ID.\
+> Required sensor's unit of measurement: µg/m3
 >
 > **pm25**:\
-> Room PM2.5 sensor entity ID.
+> Room PM2.5 sensor entity ID.\
+> Required sensor's unit of measurement: µg/m3
 >
 > **pm5**:\
-> Room PM5.0 sensor entity ID.
+> Room PM5.0 sensor entity ID.\
+> Required sensor's unit of measurement: µg/m3
 >
 > **pm10**:\
-> Room PM10.0 sensor entity ID.
+> Room PM10.0 sensor entity ID.\
+> Required sensor's unit of measurement: µg/m3
 
 **sensors**:\
   _(list) (Optional)_\

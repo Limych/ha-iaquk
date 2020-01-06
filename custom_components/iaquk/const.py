@@ -20,6 +20,7 @@ CONF_PM1 = "pm1"
 CONF_PM25 = "pm25"
 CONF_PM5 = "pm5"
 CONF_PM10 = "pm10"
+CONF_NO2 = "no2"
 
 LEVEL_EXCELLENT = "Excellent"
 LEVEL_GOOD = "Good"
