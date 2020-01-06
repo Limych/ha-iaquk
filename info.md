@@ -1,5 +1,7 @@
 This component allows you to evaluate the air quality in any room, using data from various sensors installed there. Such as temperature, humidity, carbon dioxide sensors, etc.
 
+The index is calculating in accordance with the [IAQ UK organization methodology](https://github.com/Limych/ha-iaquk/blob/master/IAQ_Rating_Index.pdf).
+
 ![](https://github.com/Limych/ha-iaquk/raw/master/iaquk.jpg)
 
 ## Links

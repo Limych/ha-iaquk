@@ -2,7 +2,7 @@
 
 # Base component constants
 DOMAIN = "iaquk"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 ISSUE_URL = "https://github.com/Limych/ha-iaquk/issues"
 ATTRIBUTION = None
 DATA_IAQUK = 'iaquk'
@@ -14,6 +14,12 @@ CONF_TEMPERATURE = "temperature"
 CONF_HUMIDITY = "humidity"
 CONF_CO2 = "co2"
 CONF_TVOC = "tvoc"
+CONF_PM03 = "pm03"
+CONF_PM05 = "pm05"
+CONF_PM1 = "pm1"
+CONF_PM25 = "pm25"
+CONF_PM5 = "pm5"
+CONF_PM10 = "pm10"
 
 LEVEL_EXCELLENT = "Excellent"
 LEVEL_GOOD = "Good"

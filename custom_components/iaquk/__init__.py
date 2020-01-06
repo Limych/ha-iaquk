@@ -22,7 +22,8 @@ from homeassistant.util.temperature import convert as convert_temperature
 
 from .const import DOMAIN, VERSION, ISSUE_URL, SUPPORT_LIB_URL, CONF_SOURCES, \
     DATA_IAQUK, CONF_CO2, CONF_TEMPERATURE, CONF_HUMIDITY, CONF_TVOC, LEVEL_INADEQUATE, \
-    LEVEL_POOR, LEVEL_FAIR, LEVEL_GOOD, LEVEL_EXCELLENT
+    LEVEL_POOR, LEVEL_FAIR, LEVEL_GOOD, LEVEL_EXCELLENT, CONF_PM03, CONF_PM05, CONF_PM1, \
+    CONF_PM25, CONF_PM5, CONF_PM10
 from .sensor import SENSORS
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,7 +32,13 @@ SOURCES = [
     CONF_TEMPERATURE,
     CONF_HUMIDITY,
     CONF_CO2,
-    CONF_TVOC
+    CONF_TVOC,
+    CONF_PM03,
+    CONF_PM05,
+    CONF_PM1,
+    CONF_PM25,
+    CONF_PM5,
+    CONF_PM10,
 ]
 
 SOURCES_SCHEMA = vol.All(
@@ -295,4 +302,130 @@ class Iaquk:
             index = 3
         elif value <= 2200:
             index = 2
+        return index
+
+    @property
+    def _pm03_index(self):
+        """Transform indoor PM0.3 values to IAQ points according
+        to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
+        entity_id = self._sources.get(CONF_TVOC)
+
+        if entity_id is None:
+            return None
+
+        value = get_number_state(self._hass.states.get(entity_id))
+        _LOGGER.debug('[%s] PM0.3=%s', self._entity_id, value)
+        if value is None:
+            return None
+
+        index = 1
+        if value <= 100000:
+            index = 5
+        elif value <= 250000:
+            index = 3
+        return index
+
+    @property
+    def _pm05_index(self):
+        """Transform indoor PM0.5 values to IAQ points according
+        to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
+        entity_id = self._sources.get(CONF_TVOC)
+
+        if entity_id is None:
+            return None
+
+        value = get_number_state(self._hass.states.get(entity_id))
+        _LOGGER.debug('[%s] PM0.5=%s', self._entity_id, value)
+        if value is None:
+            return None
+
+        index = 1
+        if value <= 35200:
+            index = 5
+        elif value <= 87500:
+            index = 3
+        return index
+
+    @property
+    def _pm1_index(self):
+        """Transform indoor PM1.0 values to IAQ points according
+        to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
+        entity_id = self._sources.get(CONF_TVOC)
+
+        if entity_id is None:
+            return None
+
+        value = get_number_state(self._hass.states.get(entity_id))
+        _LOGGER.debug('[%s] PM1.0=%s', self._entity_id, value)
+        if value is None:
+            return None
+
+        index = 1
+        if value <= 8320:
+            index = 5
+        elif value <= 20800:
+            index = 3
+        return index
+
+    @property
+    def _pm25_index(self):
+        """Transform indoor PM2.5 values to IAQ points according
+        to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
+        entity_id = self._sources.get(CONF_TVOC)
+
+        if entity_id is None:
+            return None
+
+        value = get_number_state(self._hass.states.get(entity_id))
+        _LOGGER.debug('[%s] PM2.5=%s', self._entity_id, value)
+        if value is None:
+            return None
+
+        index = 1
+        if value <= 545:
+            index = 5
+        elif value <= 1362:
+            index = 3
+        return index
+
+    @property
+    def _pm5_index(self):
+        """Transform indoor PM5.0 values to IAQ points according
+        to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
+        entity_id = self._sources.get(CONF_TVOC)
+
+        if entity_id is None:
+            return None
+
+        value = get_number_state(self._hass.states.get(entity_id))
+        _LOGGER.debug('[%s] PM5.0=%s', self._entity_id, value)
+        if value is None:
+            return None
+
+        index = 1
+        if value <= 193:
+            index = 5
+        elif value <= 483:
+            index = 3
+        return index
+
+    @property
+    def _pm10_index(self):
+        """Transform indoor PM10.0 values to IAQ points according
+        to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
+        entity_id = self._sources.get(CONF_TVOC)
+
+        if entity_id is None:
+            return None
+
+        value = get_number_state(self._hass.states.get(entity_id))
+        _LOGGER.debug('[%s] PM10.0=%s', self._entity_id, value)
+        if value is None:
+            return None
+
+        index = 1
+        if value <= 68:
+            index = 5
+        elif value <= 170:
+            index = 3
         return index
