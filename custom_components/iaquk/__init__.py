@@ -22,7 +22,7 @@ from homeassistant.util.temperature import convert as convert_temperature
 
 from .const import DOMAIN, VERSION, ISSUE_URL, SUPPORT_LIB_URL, CONF_SOURCES, \
     DATA_IAQUK, CONF_CO2, CONF_TEMPERATURE, CONF_HUMIDITY, CONF_TVOC, LEVEL_INADEQUATE, \
-    LEVEL_POOR, LEVEL_FAIR, LEVEL_GOOD, LEVEL_EXCELLENT, CONF_NO2, CONF_PM
+    LEVEL_POOR, LEVEL_FAIR, LEVEL_GOOD, LEVEL_EXCELLENT, CONF_NO2, CONF_PM, CONF_CO
 from .sensor import SENSORS
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,6 +31,7 @@ SOURCES = [
     CONF_TEMPERATURE,
     CONF_HUMIDITY,
     CONF_CO2,
+    CONF_CO,
     CONF_NO2,
     CONF_TVOC,
     CONF_PM,
@@ -357,5 +358,26 @@ class Iaquk:
         if value <= 106:  # ppb
             index = 5
         elif value <= 213:  # ppb
+            index = 3
+        return index
+
+    @property
+    def _co_index(self):
+        """Transform indoor CO values to IAQ points according
+        to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
+        entity_id = self._sources.get(CONF_CO)
+
+        if entity_id is None:
+            return None
+
+        value = self._get_number_state(entity_id)
+        _LOGGER.debug('[%s] CO=%s', self._entity_id, value)
+        if value is None:
+            return None
+
+        index = 1
+        if value == 0:  # ppm
+            index = 5
+        elif value <= 6:  # ppm
             index = 3
         return index

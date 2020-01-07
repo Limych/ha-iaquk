@@ -16,6 +16,7 @@ CONF_CO2 = "co2"
 CONF_TVOC = "tvoc"
 CONF_PM = "pm"
 CONF_NO2 = "no2"
+CONF_CO = "co"
 
 LEVEL_EXCELLENT = "Excellent"
 LEVEL_GOOD = "Good"

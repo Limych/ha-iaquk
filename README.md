@@ -113,12 +113,17 @@ You can create as many groups as you need. But each group must have an unique na
 >
 > **co2**:\
 > _(string) (Optional)_\
-> Room eCO2 sensor entity ID.\
+> Room Carbon Dioxide (CO<sub>2</sub>) sensor entity ID.\
+> Required sensor's unit of measurement: ppm
+>
+> **co**:\
+> _(string) (Optional)_\
+> Room Carbon Monoxide (CO) sensor entity ID.\
 > Required sensor's unit of measurement: ppm
 >
 > **no2**:\
 > _(string) (Optional)_\
-> Room NO2 sensor entity ID.\
+> Room Nitrogen Dioxide (NO<sub>2</sub>) sensor entity ID.\
 > Required sensor's unit of measurement: ppb
 >
 > **tvoc**:\
@@ -129,7 +134,7 @@ You can create as many groups as you need. But each group must have an unique na
 > **pm**:\
 > _(string | list) (Optional)_\
 > Room particulate matter sensors entity IDs.\
-> Required sensor's unit of measurement: µg/m3
+> Required sensor's unit of measurement: µg/m<sup>3</sup>
 
 **sensors**:\
   _(list) (Optional)_\
