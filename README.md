@@ -133,8 +133,8 @@ You can create as many groups as you need. But each group must have an unique na
 >
 > **hcho**:\
 > _(string) (Optional)_\
-> Room Formaldehyde (HCHO) sensor entity ID.\
-> Required sensor's unit of measurement: ppb
+> Room Formaldehyde (HCHO; CH2O) sensor entity ID.\
+> Required sensor's unit of measurement: ppm
 >
 > **pm**:\
 > _(string | list) (Optional)_\

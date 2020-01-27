@@ -398,12 +398,12 @@ class Iaquk:
             return None
 
         index = 1
-        if value <= 24:  # ppb
+        if value <= 0.024:  # ppm
             index = 5
-        elif value <= 60:  # ppb
+        elif value <= 0.06:  # ppm
             index = 4
-        elif value <= 120:  # ppb
+        elif value <= 0.12:  # ppm
             index = 3
-        elif value <= 240:  # ppb
+        elif value <= 0.24:  # ppm
             index = 2
         return index
