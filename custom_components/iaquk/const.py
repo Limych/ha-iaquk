@@ -2,7 +2,7 @@
 
 # Base component constants
 DOMAIN = "iaquk"
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 ISSUE_URL = "https://github.com/Limych/ha-iaquk/issues"
 ATTRIBUTION = None
 DATA_IAQUK = 'iaquk'
