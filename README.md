@@ -131,6 +131,11 @@ You can create as many groups as you need. But each group must have an unique na
 > Room tVOC sensor entity ID.\
 > Required sensor's unit of measurement: ppb
 >
+> **hcho**:\
+> _(string) (Optional)_\
+> Room Formaldehyde (HCHO) sensor entity ID.\
+> Required sensor's unit of measurement: ppb
+>
 > **pm**:\
 > _(string | list) (Optional)_\
 > Room particulate matter sensors entity IDs.\
