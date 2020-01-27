@@ -22,7 +22,7 @@ from homeassistant.util.temperature import convert as convert_temperature
 
 from .const import DOMAIN, VERSION, ISSUE_URL, SUPPORT_LIB_URL, CONF_SOURCES, \
     DATA_IAQUK, CONF_CO2, CONF_TEMPERATURE, CONF_HUMIDITY, CONF_TVOC, LEVEL_INADEQUATE, \
-    LEVEL_POOR, LEVEL_FAIR, LEVEL_GOOD, LEVEL_EXCELLENT
+    LEVEL_POOR, LEVEL_FAIR, LEVEL_GOOD, LEVEL_EXCELLENT, CONF_NO2, CONF_PM, CONF_CO, CONF_HCHO
 from .sensor import SENSORS
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,12 +31,21 @@ SOURCES = [
     CONF_TEMPERATURE,
     CONF_HUMIDITY,
     CONF_CO2,
-    CONF_TVOC
+    CONF_CO,
+    CONF_NO2,
+    CONF_TVOC,
+    CONF_HCHO,
+    CONF_PM,
+]
+
+SOURCES_LISTS = [
+    CONF_PM
 ]
 
 SOURCES_SCHEMA = vol.All(
-    vol.Schema({vol.Optional(src): cv.entity_id for src in SOURCES}),
-    cv.has_at_least_one_key(CONF_TEMPERATURE, CONF_HUMIDITY, CONF_CO2, CONF_TVOC)
+    vol.Schema({vol.Optional(src): (cv.entity_ids if src in SOURCES_LISTS else cv.entity_id)
+                for src in SOURCES}),
+    cv.has_at_least_one_key(*SOURCES)
 )
 
 IAQ_SCHEMA = vol.Schema({
@@ -92,19 +101,6 @@ async def async_setup(hass, config):
     return True
 
 
-def get_number_state(value):
-    """Convert value to number."""
-    if not isinstance(value, State):
-        return None
-    value = value.state
-    if isinstance(value, numbers.Number):
-        return value
-    try:
-        return float(value)
-    except:  # pylint: disable=w0702
-        return None
-
-
 class Iaquk:
     """IAQ UK controller."""
 
@@ -130,8 +126,14 @@ class Iaquk:
         @callback
         def sensor_startup(event):
             """Update template on startup."""
-            async_track_state_change(self._hass, self._sources.values(),
-                                     sensor_state_listener)
+            entity_ids = []
+            for src in self._sources:
+                if isinstance(src, list):
+                    entity_ids.extend(src)
+                else:
+                    entity_ids.append(src)
+
+            async_track_state_change(self._hass, entity_ids, sensor_state_listener)
             sensor_state_listener(None, None, None)  # Force first update
 
         self._hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START,
@@ -186,6 +188,20 @@ class Iaquk:
             _LOGGER.debug('[%s] Current IAQ index %d (%d sensors)',
                           self._entity_id, self._iaq_index, len(iaq))
 
+    def _get_number_state(self, entity_id):
+        """Convert value to number."""
+        value = self._hass.states.get(entity_id)
+        if not isinstance(value, State):
+            return None
+        value = value.state
+        _LOGGER.debug('[%s] %s=%s', self._entity_id, entity_id, value)
+        if isinstance(value, numbers.Number):
+            return value
+        try:
+            return float(value)
+        except:  # pylint: disable=w0702
+            return None
+
     @property
     def _temperature_index(self):
         """Transform indoor temperature values to IAQ points according
@@ -196,7 +212,7 @@ class Iaquk:
             return None
 
         entity = self._hass.states.get(entity_id)
-        value = get_number_state(entity)
+        value = self._get_number_state(entity_id)
         _LOGGER.debug('[%s] temperature=%s', self._entity_id, value)
         if value is None:
             return None
@@ -212,13 +228,13 @@ class Iaquk:
                 value, entity_unit, TEMP_CELSIUS)
 
         index = 1
-        if 18 <= value <= 21:
+        if 18 <= value <= 21:  # °C
             index = 5
-        elif value > 16 or value < 23:
+        elif value > 16 or value < 23:  # °C
             index = 4
-        elif value > 15 or value < 24:
+        elif value > 15 or value < 24:  # °C
             index = 3
-        elif value > 14 or value < 25:
+        elif value > 14 or value < 25:  # °C
             index = 2
         return index
 
@@ -231,19 +247,19 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = get_number_state(self._hass.states.get(entity_id))
+        value = self._get_number_state(entity_id)
         _LOGGER.debug('[%s] humidity=%s', self._entity_id, value)
         if value is None:
             return None
 
         index = 5
-        if value < 10 or value > 90:
+        if value < 10 or value > 90:  # %
             index = 1
-        elif value < 20 or value > 80:
+        elif value < 20 or value > 80:  # %
             index = 2
-        elif value < 30 or value > 70:
+        elif value < 30 or value > 70:  # %
             index = 3
-        elif value < 40 or value > 60:
+        elif value < 40 or value > 60:  # %
             index = 4
         return index
 
@@ -256,19 +272,19 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = get_number_state(self._hass.states.get(entity_id))
+        value = self._get_number_state(entity_id)
         _LOGGER.debug('[%s] CO2=%s', self._entity_id, value)
         if value is None:
             return None
 
         index = 1
-        if value <= 600:
+        if value <= 600:  # ppm
             index = 5
-        elif value <= 800:
+        elif value <= 800:  # ppm
             index = 4
-        elif value <= 1500:
+        elif value <= 1500:  # ppm
             index = 3
-        elif value <= 1800:
+        elif value <= 1800:  # ppm
             index = 2
         return index
 
@@ -281,18 +297,113 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = get_number_state(self._hass.states.get(entity_id))
+        value = self._get_number_state(entity_id)
         _LOGGER.debug('[%s] tVOC=%s', self._entity_id, value)
         if value is None:
             return None
 
         index = 1
-        if value <= 65:
+        if value <= 65:  # ppb
             index = 5
-        elif value <= 220:
+        elif value <= 220:  # ppb
             index = 4
-        elif value <= 660:
+        elif value <= 660:  # ppb
             index = 3
-        elif value <= 2200:
+        elif value <= 2200:  # ppb
+            index = 2
+        return index
+
+    @property
+    def _pm_index(self):
+        """Transform indoor particulate matters values to IAQ points according
+        to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
+        entity_ids = self._sources.get(CONF_PM)
+
+        values = []
+        for eid in entity_ids:
+            val = self._get_number_state(eid)
+            if val is not None:
+                values.append(val)
+
+        _LOGGER.debug('[%s] PM=%s', self._entity_id, values)
+        if not values:
+            return None
+
+        value = sum(values)
+        index = 1
+        if value <= 23:  # µg/m3
+            index = 5
+        elif value <= 41:  # µg/m3
+            index = 4
+        elif value <= 53:  # µg/m3
+            index = 3
+        elif value <= 64:  # µg/m3
+            index = 2
+        return index
+
+    @property
+    def _no2_index(self):
+        """Transform indoor NO2 values to IAQ points according
+        to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
+        entity_id = self._sources.get(CONF_NO2)
+
+        if entity_id is None:
+            return None
+
+        value = self._get_number_state(entity_id)
+        _LOGGER.debug('[%s] NO2=%s', self._entity_id, value)
+        if value is None:
+            return None
+
+        index = 1
+        if value <= 106:  # ppb
+            index = 5
+        elif value <= 213:  # ppb
+            index = 3
+        return index
+
+    @property
+    def _co_index(self):
+        """Transform indoor CO values to IAQ points according
+        to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
+        entity_id = self._sources.get(CONF_CO)
+
+        if entity_id is None:
+            return None
+
+        value = self._get_number_state(entity_id)
+        _LOGGER.debug('[%s] CO=%s', self._entity_id, value)
+        if value is None:
+            return None
+
+        index = 1
+        if value == 0:  # ppm
+            index = 5
+        elif value <= 6:  # ppm
+            index = 3
+        return index
+
+    @property
+    def _hcho_index(self):
+        """Transform indoor Formaldegyde (HCHO) values to IAQ points according
+        to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
+        entity_id = self._sources.get(CONF_HCHO)
+
+        if entity_id is None:
+            return None
+
+        value = self._get_number_state(entity_id)
+        _LOGGER.debug('[%s] HCHO=%s', self._entity_id, value)
+        if value is None:
+            return None
+
+        index = 1
+        if value <= 24:  # ppb
+            index = 5
+        elif value <= 60:  # ppb
+            index = 4
+        elif value <= 120:  # ppb
+            index = 3
+        elif value <= 240:  # ppb
             index = 2
         return index

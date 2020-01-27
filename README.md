@@ -1,13 +1,13 @@
 *Please :star: this repo if you find it useful*
 
-# Interior Air Quality Sensor Component for Home Assistant
+# Indoor Air Quality Sensor Component for Home Assistant
 
 [![GitHub Release](https://img.shields.io/github/tag-date/Limych/ha-iaquk?label=release&style=popout)](https://github.com/Limych/ha-iaquk/releases)
 [![GitHub Activity](https://img.shields.io/github/commit-activity/y/Limych/ha-iaquk.svg?style=popout)](https://github.com/Limych/ha-iaquk/commits/master)
 [![License](https://img.shields.io/github/license/Limych/ha-iaquk.svg?style=popout)](LICENSE)
 ![Requires.io](https://img.shields.io/requires/github/Limych/ha-iaquk)
 
-[![hacs](https://img.shields.io/badge/HACS-Custom-orange.svg?style=popout)][hacs]
+[![hacs](https://img.shields.io/badge/HACS-Default-orange.svg?style=popout)][hacs]
 ![Project Maintenance](https://img.shields.io/badge/maintainer-Andrey%20Khrolenok%20%40Limych-blue.svg?style=popout)
 
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/Limych/ha-iaquk?style=popout)](https://github.com/Limych/ha-iaquk/pulls)
@@ -16,6 +16,8 @@
 [![Community Forum](https://img.shields.io/badge/community-forum-brightgreen.svg?style=popout)][forum-support]
 
 This component allows you to evaluate the air quality in any room, using data from various sensors installed there. Such as temperature, humidity, carbon dioxide sensors, etc.
+
+The index is calculating in accordance with the [IAQ UK organization methodology](IAQ_Rating_Index.pdf).
 
 I also suggest you [visit the support topic][forum-support] on the community forum.
 
@@ -26,7 +28,7 @@ I also suggest you [visit the support topic][forum-support] on the community for
 ### HACS - Recommended
 
 1. Have [HACS](https://hacs.xyz) installed, this will allow you to easily manage and track updates.
-1. Search for 'IAQUK'.
+1. Search for "Indoor Air Quality UK Index".
 1. Click Install below the found integration.
 1. Configure using the configuration instructions below.
 1. Restart Home-Assistant.
@@ -100,16 +102,44 @@ You can create as many groups as you need. But each group must have an unique na
   Dictionary of sensors involved in the calculations. At least one sensor must be specified.
 
 > **temperature**:\
-> Room temperature sensor entity ID.
+> _(string) (Optional)_\
+> Room temperature sensor entity ID.\
+> Required sensor's unit of measurement: °C or °F
 >
 > **humidity**:\
-> Room humidity sensor entity ID.
+> _(string) (Optional)_\
+> Room humidity sensor entity ID.\
+> Required sensor's unit of measurement: %
 >
 > **co2**:\
-> Room eCO2 sensor entity ID.
+> _(string) (Optional)_\
+> Room Carbon Dioxide (CO<sub>2</sub>) sensor entity ID.\
+> Required sensor's unit of measurement: ppm
+>
+> **co**:\
+> _(string) (Optional)_\
+> Room Carbon Monoxide (CO) sensor entity ID.\
+> Required sensor's unit of measurement: ppm
+>
+> **no2**:\
+> _(string) (Optional)_\
+> Room Nitrogen Dioxide (NO<sub>2</sub>) sensor entity ID.\
+> Required sensor's unit of measurement: ppb
 >
 > **tvoc**:\
-> Room tVOC sensor entity ID.
+> _(string) (Optional)_\
+> Room tVOC sensor entity ID.\
+> Required sensor's unit of measurement: ppb
+>
+> **hcho**:\
+> _(string) (Optional)_\
+> Room Formaldehyde (HCHO) sensor entity ID.\
+> Required sensor's unit of measurement: ppb
+>
+> **pm**:\
+> _(string | list) (Optional)_\
+> Room particulate matter sensors entity IDs.\
+> Required sensor's unit of measurement: µg/m<sup>3</sup>
 
 **sensors**:\
   _(list) (Optional)_\
@@ -145,5 +175,5 @@ custom_updater:
 ```
 
 
-[forum-support]: https://community.home-assistant.io/t/iaquk-cameras-and-doorbells-integration/129388
+[forum-support]: https://community.home-assistant.io/t/indoor-air-quality-sensor-component/160474
 [hacs]: https://github.com/custom-components/hacs
