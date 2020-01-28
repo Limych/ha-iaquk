@@ -133,7 +133,7 @@ You can create as many groups as you need. But each group must have an unique na
 >
 > **hcho**:\
 > _(string) (Optional)_\
-> Room Formaldehyde (HCHO; CH2O) sensor entity ID.\
+> Room Formaldehyde (HCHO; CH<sub>2</sub>O) sensor entity ID.\
 > Required sensor's unit of measurement: ppm
 >
 > **pm**:\
@@ -151,9 +151,9 @@ You can create as many groups as you need. But each group must have an unique na
 >
 > **iaq_level**:\
 > The sensor shows the air quality in a human-readable form. Possible values: Excellent, Good, Fair, Poor, Inadequate.
->
-> **_Note_**:\
-> The icon of `iaq_level` sensor changes its image depending on the value of the sensor.
+
+**_Note_**:\
+The icon of `iaq_level` sensor changes its image depending on the value of the sensor.
 
 ## Contributions are welcome!
 
