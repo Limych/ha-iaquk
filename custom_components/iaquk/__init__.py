@@ -12,17 +12,18 @@ from typing import Optional
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.sensor import DOMAIN as SENSOR
-from homeassistant.const import CONF_NAME, CONF_SENSORS, EVENT_HOMEASSISTANT_START, \
-    ATTR_UNIT_OF_MEASUREMENT, TEMP_CELSIUS, TEMP_FAHRENHEIT, UNIT_NOT_RECOGNIZED_TEMPLATE, \
-    TEMPERATURE
+from homeassistant.const import CONF_NAME, CONF_SENSORS, \
+    EVENT_HOMEASSISTANT_START, ATTR_UNIT_OF_MEASUREMENT, TEMP_CELSIUS, \
+    TEMP_FAHRENHEIT, UNIT_NOT_RECOGNIZED_TEMPLATE, TEMPERATURE
 from homeassistant.core import callback, State
 from homeassistant.helpers import discovery
 from homeassistant.helpers.event import async_track_state_change
 from homeassistant.util.temperature import convert as convert_temperature
 
 from .const import DOMAIN, VERSION, ISSUE_URL, SUPPORT_LIB_URL, CONF_SOURCES, \
-    DATA_IAQUK, CONF_CO2, CONF_TEMPERATURE, CONF_HUMIDITY, CONF_TVOC, LEVEL_INADEQUATE, \
-    LEVEL_POOR, LEVEL_FAIR, LEVEL_GOOD, LEVEL_EXCELLENT, CONF_NO2, CONF_PM, CONF_CO, CONF_HCHO
+    DATA_IAQUK, CONF_CO2, CONF_TEMPERATURE, CONF_HUMIDITY, CONF_TVOC, \
+    LEVEL_INADEQUATE, LEVEL_POOR, LEVEL_FAIR, LEVEL_GOOD, LEVEL_EXCELLENT, \
+    CONF_NO2, CONF_PM, CONF_CO, CONF_HCHO
 from .sensor import SENSORS
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,7 +44,8 @@ SOURCES_LISTS = [
 ]
 
 SOURCES_SCHEMA = vol.All(
-    vol.Schema({vol.Optional(src): (cv.entity_ids if src in SOURCES_LISTS else cv.entity_id)
+    vol.Schema({vol.Optional(src): (
+        cv.entity_ids if src in SOURCES_LISTS else cv.entity_id)
                 for src in SOURCES}),
     cv.has_at_least_one_key(*SOURCES)
 )
@@ -85,7 +87,8 @@ async def async_setup(hass, config):
             sensors = SENSORS.keys()
 
         _LOGGER.debug('Initialize controller %s for sources: %s', object_id,
-                      ', '.join([f'{key}={value}' for (key, value) in sources.items()]))
+                      ', '.join([f'{key}={value}' for (key, value) in
+                                 sources.items()]))
 
         controller = Iaquk(hass, object_id, name, sources)
         hass.data[DATA_IAQUK][object_id] = controller
@@ -133,7 +136,8 @@ class Iaquk:
                 else:
                     entity_ids.append(src)
 
-            async_track_state_change(self._hass, entity_ids, sensor_state_listener)
+            async_track_state_change(self._hass, entity_ids,
+                                     sensor_state_listener)
             sensor_state_listener(None, None, None)  # Force first update
 
         self._hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START,
