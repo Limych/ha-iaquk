@@ -130,11 +130,14 @@ class Iaquk:
         def sensor_startup(event):
             """Update template on startup."""
             entity_ids = []
-            for src in self._sources:
+            for src in self._sources.values():
                 if isinstance(src, list):
                     entity_ids.extend(src)
                 else:
                     entity_ids.append(src)
+
+            _LOGGER.debug('[%s] Setup states tracking for %s', self._entity_id,
+                          ', '.join(entity_ids))
 
             async_track_state_change(self._hass, entity_ids,
                                      sensor_state_listener)
@@ -181,7 +184,7 @@ class Iaquk:
         _LOGGER.debug('[%s] State update', self._entity_id)
 
         iaq = []
-        for src in SOURCES:
+        for src in self._sources:
             index = self.__getattribute__('_%s_index' % src)
             _LOGGER.debug('[%s] %s_index=%s', self._entity_id, src, index)
             if index is not None:
