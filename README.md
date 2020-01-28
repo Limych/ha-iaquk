@@ -136,6 +136,11 @@ You can create as many groups as you need. But each group must have an unique na
 > Room Formaldehyde (HCHO; CH<sub>2</sub>O) sensor entity ID.\
 > Required sensor's unit of measurement: ppm
 >
+> **radon**:\
+> _(string) (Optional)_\
+> Room Radon (Rn) sensor entity ID.\
+> Required sensor's unit of measurement: Bq/m<sup>3</sup>
+>
 > **pm**:\
 > _(string | list) (Optional)_\
 > Room particulate matter sensors entity IDs.\
