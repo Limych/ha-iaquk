@@ -319,6 +319,9 @@ class Iaquk:
         to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
         entity_ids = self._sources.get(CONF_PM)
 
+        if entity_ids is None:
+            return None
+
         values = []
         for eid in entity_ids:
             val = self._get_number_state(eid)
