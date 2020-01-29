@@ -192,16 +192,22 @@ class Iaquk:
 
         if iaq:
             self._iaq_index = int(sum(iaq) * 13 / len(iaq))
-            _LOGGER.debug('[%s] Current IAQ index %d (%d sensors)',
+            _LOGGER.debug('[%s] Current IAQ index %d (%d sources used)',
                           self._entity_id, self._iaq_index, len(iaq))
 
-    def _get_number_state(self, entity_id):
+    def _get_number_state(self, entity_id, entity_unit=None):
         """Convert value to number."""
-        value = self._hass.states.get(entity_id)
-        if not isinstance(value, State):
+        entity = self._hass.states.get(entity_id)
+        if not isinstance(entity, State):
             return None
-        value = value.state
-        _LOGGER.debug('[%s] %s=%s', self._entity_id, entity_id, value)
+        value = entity.state
+        unit = entity.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
+        _LOGGER.debug('[%s] %s=%s %s', self._entity_id, entity_id, value, unit)
+
+        if entity_unit is not None and entity_unit != unit:
+            raise ValueError(
+                UNIT_NOT_RECOGNIZED_TEMPLATE.format(unit, "source sensor's"))
+
         if isinstance(value, numbers.Number):
             return value
         try:
@@ -220,7 +226,6 @@ class Iaquk:
 
         entity = self._hass.states.get(entity_id)
         value = self._get_number_state(entity_id)
-        _LOGGER.debug('[%s] temperature=%s', self._entity_id, value)
         if value is None:
             return None
 
@@ -233,6 +238,8 @@ class Iaquk:
         if entity_unit != TEMP_CELSIUS:
             value = convert_temperature(
                 value, entity_unit, TEMP_CELSIUS)
+        _LOGGER.debug('[%s] temperature=%s %s', self._entity_id, value,
+                      TEMP_CELSIUS)
 
         index = 1
         if 18 <= value <= 21:  # °C
@@ -254,10 +261,11 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id)
-        _LOGGER.debug('[%s] humidity=%s', self._entity_id, value)
+        value = self._get_number_state(entity_id, '%')
         if value is None:
             return None
+
+        # _LOGGER.debug('[%s] humidity=%s', self._entity_id, value)
 
         index = 5
         if value < 10 or value > 90:  # %
@@ -279,10 +287,11 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id)
-        _LOGGER.debug('[%s] CO2=%s', self._entity_id, value)
+        value = self._get_number_state(entity_id, 'ppm')
         if value is None:
             return None
+
+        # _LOGGER.debug('[%s] CO2=%s', self._entity_id, value)
 
         index = 1
         if value <= 600:  # ppm
@@ -304,10 +313,11 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id)
-        _LOGGER.debug('[%s] tVOC=%s', self._entity_id, value)
+        value = self._get_number_state(entity_id, 'ppb')
         if value is None:
             return None
+
+        # _LOGGER.debug('[%s] tVOC=%s', self._entity_id, value)
 
         index = 1
         if value <= 65:  # ppb
@@ -331,13 +341,13 @@ class Iaquk:
 
         values = []
         for eid in entity_ids:
-            val = self._get_number_state(eid)
+            val = self._get_number_state(eid, 'µg/m3')
             if val is not None:
                 values.append(val)
-
-        _LOGGER.debug('[%s] PM=%s', self._entity_id, values)
         if not values:
             return None
+
+        # _LOGGER.debug('[%s] PM=%s', self._entity_id, values)
 
         value = sum(values)
         index = 1
@@ -360,10 +370,11 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id)
-        _LOGGER.debug('[%s] NO2=%s', self._entity_id, value)
+        value = self._get_number_state(entity_id, 'ppb')
         if value is None:
             return None
+
+        # _LOGGER.debug('[%s] NO2=%s', self._entity_id, value)
 
         index = 1
         if value <= 106:  # ppb
@@ -381,10 +392,11 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id)
-        _LOGGER.debug('[%s] CO=%s', self._entity_id, value)
+        value = self._get_number_state(entity_id, 'ppm')
         if value is None:
             return None
+
+        # _LOGGER.debug('[%s] CO=%s', self._entity_id, value)
 
         index = 1
         if value == 0:  # ppm
@@ -402,10 +414,11 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id)
-        _LOGGER.debug('[%s] HCHO=%s', self._entity_id, value)
+        value = self._get_number_state(entity_id, 'ppm')
         if value is None:
             return None
+
+        # _LOGGER.debug('[%s] HCHO=%s', self._entity_id, value)
 
         index = 1
         if value <= 0.024:  # ppm
