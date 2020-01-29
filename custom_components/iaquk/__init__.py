@@ -6,7 +6,6 @@ https://github.com/Limych/ha-iaquk
 """
 
 import logging
-import numbers
 from typing import Optional
 
 import homeassistant.helpers.config_validation as cv
@@ -14,7 +13,8 @@ import voluptuous as vol
 from homeassistant.components.sensor import DOMAIN as SENSOR
 from homeassistant.const import CONF_NAME, CONF_SENSORS, \
     EVENT_HOMEASSISTANT_START, ATTR_UNIT_OF_MEASUREMENT, TEMP_CELSIUS, \
-    TEMP_FAHRENHEIT, UNIT_NOT_RECOGNIZED_TEMPLATE, TEMPERATURE
+    TEMP_FAHRENHEIT, UNIT_NOT_RECOGNIZED_TEMPLATE, TEMPERATURE, STATE_UNKNOWN, \
+    STATE_UNAVAILABLE
 from homeassistant.core import callback, State
 from homeassistant.helpers import discovery
 from homeassistant.helpers.event import async_track_state_change
@@ -147,12 +147,12 @@ class Iaquk:
                                          sensor_startup)
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         """Return a unique ID."""
         return self._entity_id
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Get controller name."""
         return self._name
 
@@ -195,28 +195,37 @@ class Iaquk:
             _LOGGER.debug('[%s] Current IAQ index %d (%d sources used)',
                           self._entity_id, self._iaq_index, len(iaq))
 
-    def _get_number_state(self, entity_id, entity_unit=None):
+    @staticmethod
+    def _has_state(state) -> bool:
+        """Return True if state has any value."""
+        return \
+            state is not None \
+            and state not in [STATE_UNKNOWN, STATE_UNAVAILABLE]
+
+    def _get_number_state(self, entity_id, entity_unit=None) -> Optional[float]:
         """Convert value to number."""
         entity = self._hass.states.get(entity_id)
         if not isinstance(entity, State):
             return None
         value = entity.state
         unit = entity.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
-        _LOGGER.debug('[%s] %s=%s %s', self._entity_id, entity_id, value, unit)
+        _LOGGER.debug('[%s] %s=%s %s', self._entity_id, entity_id, value,
+                      (unit if unit and self._has_state(value) else ''))
+
+        if not self._has_state(value):
+            return None
 
         if entity_unit is not None and entity_unit != unit:
             raise ValueError(
                 UNIT_NOT_RECOGNIZED_TEMPLATE.format(unit, "source sensor's"))
 
-        if isinstance(value, numbers.Number):
-            return value
         try:
             return float(value)
         except:  # pylint: disable=w0702
             return None
 
     @property
-    def _temperature_index(self):
+    def _temperature_index(self) -> Optional[int]:
         """Transform indoor temperature values to IAQ points according
         to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
         entity_id = self._sources.get(CONF_TEMPERATURE)
@@ -253,7 +262,7 @@ class Iaquk:
         return index
 
     @property
-    def _humidity_index(self):
+    def _humidity_index(self) -> Optional[int]:
         """Transform indoor humidity values to IAQ points according
         to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
         entity_id = self._sources.get(CONF_HUMIDITY)
@@ -279,7 +288,7 @@ class Iaquk:
         return index
 
     @property
-    def _co2_index(self):
+    def _co2_index(self) -> Optional[int]:
         """Transform indoor eCO2 values to IAQ points according
         to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
         entity_id = self._sources.get(CONF_CO2)
@@ -305,7 +314,7 @@ class Iaquk:
         return index
 
     @property
-    def _tvoc_index(self):
+    def _tvoc_index(self) -> Optional[int]:
         """Transform indoor tVOC values to IAQ points according
         to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
         entity_id = self._sources.get(CONF_TVOC)
@@ -331,7 +340,7 @@ class Iaquk:
         return index
 
     @property
-    def _pm_index(self):
+    def _pm_index(self) -> Optional[int]:
         """Transform indoor particulate matters values to IAQ points according
         to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
         entity_ids = self._sources.get(CONF_PM)
@@ -362,7 +371,7 @@ class Iaquk:
         return index
 
     @property
-    def _no2_index(self):
+    def _no2_index(self) -> Optional[int]:
         """Transform indoor NO2 values to IAQ points according
         to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
         entity_id = self._sources.get(CONF_NO2)
@@ -384,7 +393,7 @@ class Iaquk:
         return index
 
     @property
-    def _co_index(self):
+    def _co_index(self) -> Optional[int]:
         """Transform indoor CO values to IAQ points according
         to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
         entity_id = self._sources.get(CONF_CO)
@@ -406,8 +415,8 @@ class Iaquk:
         return index
 
     @property
-    def _hcho_index(self):
-        """Transform indoor Formaldegyde (HCHO) values to IAQ points according
+    def _hcho_index(self) -> Optional[int]:
+        """Transform indoor Formaldehyde (HCHO) values to IAQ points according
         to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
         entity_id = self._sources.get(CONF_HCHO)
 
