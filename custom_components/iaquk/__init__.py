@@ -247,8 +247,9 @@ class Iaquk:
         if entity_unit != TEMP_CELSIUS:
             value = convert_temperature(
                 value, entity_unit, TEMP_CELSIUS)
-        _LOGGER.debug('[%s] temperature=%s %s', self._entity_id, value,
-                      TEMP_CELSIUS)
+
+        # _LOGGER.debug('[%s] temperature=%s %s', self._entity_id, value,
+        #               TEMP_CELSIUS)
 
         index = 1
         if 18 <= value <= 21:  # °C
