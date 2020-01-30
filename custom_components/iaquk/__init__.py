@@ -183,17 +183,19 @@ class Iaquk:
         """Update index state."""
         _LOGGER.debug('[%s] State update', self._entity_id)
 
-        iaq = []
+        sources = 0
+        iaq = 65
         for src in self._sources:
             index = self.__getattribute__('_%s_index' % src)
             _LOGGER.debug('[%s] %s_index=%s', self._entity_id, src, index)
-            if index is not None:
-                iaq.append(index)
+            if index in range(1, 5):
+                sources += 1
+                iaq = (iaq * index) / 5
 
-        if iaq:
-            self._iaq_index = int(sum(iaq) * 13 / len(iaq))
-            _LOGGER.debug('[%s] Current IAQ index %d (%d sources used)',
-                          self._entity_id, self._iaq_index, len(iaq))
+        if sources:
+            self._iaq_index = int(iaq)
+            _LOGGER.debug('[%s] Update IAQ index to %d (%d sources used)',
+                          self._entity_id, self._iaq_index, sources)
 
     @staticmethod
     def _has_state(state) -> bool:
