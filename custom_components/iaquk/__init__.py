@@ -115,6 +115,7 @@ class Iaquk:
         self._sources = sources
 
         self._iaq_index = None
+        self._added = False
 
     def async_added_to_hass(self):
         """Register callbacks."""
@@ -143,8 +144,10 @@ class Iaquk:
                                      sensor_state_listener)
             sensor_state_listener(None, None, None)  # Force first update
 
-        self._hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START,
-                                         sensor_startup)
+        if not self._added:
+            self._added = True
+            self._hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START,
+                                             sensor_startup)
 
     @property
     def unique_id(self) -> str:
