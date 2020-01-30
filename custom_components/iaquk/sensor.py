@@ -1,7 +1,7 @@
 """Sensor platform to calculate IAQ UK index."""
 
 import logging
-from typing import Optional, Union
+from typing import Optional, Union, Dict, Any
 
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.const import CONF_SENSORS, CONF_NAME
@@ -100,3 +100,7 @@ class IaqukSensor(Entity):
         """Return the unit of measurement of this entity, if any."""
         return 'IAQI' if self._sensor_type == SENSOR_INDEX \
             else None
+
+    @property
+    def state_attributes(self) -> Optional[Dict[str, Any]]:
+        return self._controller.state_attributes

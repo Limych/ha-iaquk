@@ -19,8 +19,18 @@ CONF_NO2 = "no2"
 CONF_CO = "co"
 CONF_HCHO = "hcho"  # Formaldehyde
 
+ATTR_SOURCES_SET = 'sources_set'
+ATTR_SOURCES_USED = 'sources_used'
+
 LEVEL_EXCELLENT = "Excellent"
 LEVEL_GOOD = "Good"
 LEVEL_FAIR = "Fair"
 LEVEL_POOR = "Poor"
 LEVEL_INADEQUATE = "Inadequate"
+
+UNIT_PPM = 'ppm'
+UNIT_PPB = {
+    'ppb': 1,
+    'ppm': 1000,
+}
+UNIT_MGM3 = 'µg/m3'
