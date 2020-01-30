@@ -6,15 +6,15 @@ https://github.com/Limych/ha-iaquk
 """
 
 import logging
-import numbers
 from typing import Optional
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.sensor import DOMAIN as SENSOR
-from homeassistant.const import CONF_NAME, CONF_SENSORS, EVENT_HOMEASSISTANT_START, \
-    ATTR_UNIT_OF_MEASUREMENT, TEMP_CELSIUS, TEMP_FAHRENHEIT, UNIT_NOT_RECOGNIZED_TEMPLATE, \
-    TEMPERATURE
+from homeassistant.const import CONF_NAME, CONF_SENSORS, \
+    EVENT_HOMEASSISTANT_START, ATTR_UNIT_OF_MEASUREMENT, TEMP_CELSIUS, \
+    TEMP_FAHRENHEIT, UNIT_NOT_RECOGNIZED_TEMPLATE, TEMPERATURE, STATE_UNKNOWN, \
+    STATE_UNAVAILABLE
 from homeassistant.core import callback, State
 from homeassistant.helpers import discovery
 from homeassistant.helpers.event import async_track_state_change
@@ -22,9 +22,8 @@ from homeassistant.util.temperature import convert as convert_temperature
 
 from .const import DOMAIN, VERSION, ISSUE_URL, SUPPORT_LIB_URL, CONF_SOURCES, \
     DATA_IAQUK, CONF_CO2, CONF_TEMPERATURE, CONF_HUMIDITY, CONF_TVOC, \
-    LEVEL_INADEQUATE, \
-    LEVEL_POOR, LEVEL_FAIR, LEVEL_GOOD, LEVEL_EXCELLENT, CONF_NO2, CONF_PM, \
-    CONF_CO, CONF_HCHO, CONF_RADON
+    LEVEL_INADEQUATE, LEVEL_POOR, LEVEL_FAIR, LEVEL_GOOD, LEVEL_EXCELLENT, \
+    CONF_NO2, CONF_PM, CONF_CO, CONF_HCHO, CONF_RADON
 from .sensor import SENSORS
 
 _LOGGER = logging.getLogger(__name__)
@@ -46,7 +45,8 @@ SOURCES_LISTS = [
 ]
 
 SOURCES_SCHEMA = vol.All(
-    vol.Schema({vol.Optional(src): (cv.entity_ids if src in SOURCES_LISTS else cv.entity_id)
+    vol.Schema({vol.Optional(src): (
+        cv.entity_ids if src in SOURCES_LISTS else cv.entity_id)
                 for src in SOURCES}),
     cv.has_at_least_one_key(*SOURCES)
 )
@@ -88,7 +88,8 @@ async def async_setup(hass, config):
             sensors = SENSORS.keys()
 
         _LOGGER.debug('Initialize controller %s for sources: %s', object_id,
-                      ', '.join([f'{key}={value}' for (key, value) in sources.items()]))
+                      ', '.join([f'{key}={value}' for (key, value) in
+                                 sources.items()]))
 
         controller = Iaquk(hass, object_id, name, sources)
         hass.data[DATA_IAQUK][object_id] = controller
@@ -115,6 +116,7 @@ class Iaquk:
         self._sources = sources
 
         self._iaq_index = None
+        self._added = False
 
     def async_added_to_hass(self):
         """Register callbacks."""
@@ -130,25 +132,31 @@ class Iaquk:
         def sensor_startup(event):
             """Update template on startup."""
             entity_ids = []
-            for src in self._sources:
+            for src in self._sources.values():
                 if isinstance(src, list):
                     entity_ids.extend(src)
                 else:
                     entity_ids.append(src)
 
-            async_track_state_change(self._hass, entity_ids, sensor_state_listener)
+            _LOGGER.debug('[%s] Setup states tracking for %s', self._entity_id,
+                          ', '.join(entity_ids))
+
+            async_track_state_change(self._hass, entity_ids,
+                                     sensor_state_listener)
             sensor_state_listener(None, None, None)  # Force first update
 
-        self._hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START,
-                                         sensor_startup)
+        if not self._added:
+            self._added = True
+            self._hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START,
+                                             sensor_startup)
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         """Return a unique ID."""
         return self._entity_id
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Get controller name."""
         return self._name
 
@@ -179,34 +187,51 @@ class Iaquk:
         """Update index state."""
         _LOGGER.debug('[%s] State update', self._entity_id)
 
-        iaq = []
-        for src in SOURCES:
+        sources = 0
+        iaq = 65
+        for src in self._sources:
             index = self.__getattribute__('_%s_index' % src)
             _LOGGER.debug('[%s] %s_index=%s', self._entity_id, src, index)
-            if index is not None:
-                iaq.append(index)
+            if index in range(1, 5):
+                sources += 1
+                iaq = (iaq * index) / 5
 
-        if iaq:
-            self._iaq_index = int(sum(iaq) * 13 / len(iaq))
-            _LOGGER.debug('[%s] Current IAQ index %d (%d sensors)',
-                          self._entity_id, self._iaq_index, len(iaq))
+        if sources:
+            self._iaq_index = int(iaq)
+            _LOGGER.debug('[%s] Update IAQ index to %d (%d sources used)',
+                          self._entity_id, self._iaq_index, sources)
 
-    def _get_number_state(self, entity_id):
+    @staticmethod
+    def _has_state(state) -> bool:
+        """Return True if state has any value."""
+        return \
+            state is not None \
+            and state not in [STATE_UNKNOWN, STATE_UNAVAILABLE]
+
+    def _get_number_state(self, entity_id, entity_unit=None) -> Optional[float]:
         """Convert value to number."""
-        value = self._hass.states.get(entity_id)
-        if not isinstance(value, State):
+        entity = self._hass.states.get(entity_id)
+        if not isinstance(entity, State):
             return None
-        value = value.state
-        _LOGGER.debug('[%s] %s=%s', self._entity_id, entity_id, value)
-        if isinstance(value, numbers.Number):
-            return value
+        value = entity.state
+        unit = entity.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
+        _LOGGER.debug('[%s] %s=%s %s', self._entity_id, entity_id, value,
+                      (unit if unit and self._has_state(value) else ''))
+
+        if not self._has_state(value):
+            return None
+
+        if entity_unit is not None and entity_unit != unit:
+            raise ValueError(
+                UNIT_NOT_RECOGNIZED_TEMPLATE.format(unit, "source sensor's"))
+
         try:
             return float(value)
         except:  # pylint: disable=w0702
             return None
 
     @property
-    def _temperature_index(self):
+    def _temperature_index(self) -> Optional[int]:
         """Transform indoor temperature values to IAQ points according
         to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
         entity_id = self._sources.get(CONF_TEMPERATURE)
@@ -216,7 +241,6 @@ class Iaquk:
 
         entity = self._hass.states.get(entity_id)
         value = self._get_number_state(entity_id)
-        _LOGGER.debug('[%s] temperature=%s', self._entity_id, value)
         if value is None:
             return None
 
@@ -230,6 +254,9 @@ class Iaquk:
             value = convert_temperature(
                 value, entity_unit, TEMP_CELSIUS)
 
+        # _LOGGER.debug('[%s] temperature=%s %s', self._entity_id, value,
+        #               TEMP_CELSIUS)
+
         index = 1
         if 18 <= value <= 21:  # °C
             index = 5
@@ -242,7 +269,7 @@ class Iaquk:
         return index
 
     @property
-    def _humidity_index(self):
+    def _humidity_index(self) -> Optional[int]:
         """Transform indoor humidity values to IAQ points according
         to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
         entity_id = self._sources.get(CONF_HUMIDITY)
@@ -250,10 +277,11 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id)
-        _LOGGER.debug('[%s] humidity=%s', self._entity_id, value)
+        value = self._get_number_state(entity_id, '%')
         if value is None:
             return None
+
+        # _LOGGER.debug('[%s] humidity=%s', self._entity_id, value)
 
         index = 5
         if value < 10 or value > 90:  # %
@@ -267,7 +295,7 @@ class Iaquk:
         return index
 
     @property
-    def _co2_index(self):
+    def _co2_index(self) -> Optional[int]:
         """Transform indoor eCO2 values to IAQ points according
         to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
         entity_id = self._sources.get(CONF_CO2)
@@ -275,10 +303,11 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id)
-        _LOGGER.debug('[%s] CO2=%s', self._entity_id, value)
+        value = self._get_number_state(entity_id, 'ppm')
         if value is None:
             return None
+
+        # _LOGGER.debug('[%s] CO2=%s', self._entity_id, value)
 
         index = 1
         if value <= 600:  # ppm
@@ -292,7 +321,7 @@ class Iaquk:
         return index
 
     @property
-    def _tvoc_index(self):
+    def _tvoc_index(self) -> Optional[int]:
         """Transform indoor tVOC values to IAQ points according
         to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
         entity_id = self._sources.get(CONF_TVOC)
@@ -300,10 +329,11 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id)
-        _LOGGER.debug('[%s] tVOC=%s', self._entity_id, value)
+        value = self._get_number_state(entity_id, 'ppb')
         if value is None:
             return None
+
+        # _LOGGER.debug('[%s] tVOC=%s', self._entity_id, value)
 
         index = 1
         if value <= 65:  # ppb
@@ -317,7 +347,7 @@ class Iaquk:
         return index
 
     @property
-    def _pm_index(self):
+    def _pm_index(self) -> Optional[int]:
         """Transform indoor particulate matters values to IAQ points according
         to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
         entity_ids = self._sources.get(CONF_PM)
@@ -327,13 +357,13 @@ class Iaquk:
 
         values = []
         for eid in entity_ids:
-            val = self._get_number_state(eid)
+            val = self._get_number_state(eid, 'µg/m3')
             if val is not None:
                 values.append(val)
-
-        _LOGGER.debug('[%s] PM=%s', self._entity_id, values)
         if not values:
             return None
+
+        # _LOGGER.debug('[%s] PM=%s', self._entity_id, values)
 
         value = sum(values)
         index = 1
@@ -348,7 +378,7 @@ class Iaquk:
         return index
 
     @property
-    def _no2_index(self):
+    def _no2_index(self) -> Optional[int]:
         """Transform indoor NO2 values to IAQ points according
         to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
         entity_id = self._sources.get(CONF_NO2)
@@ -356,10 +386,11 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id)
-        _LOGGER.debug('[%s] NO2=%s', self._entity_id, value)
+        value = self._get_number_state(entity_id, 'ppb')
         if value is None:
             return None
+
+        # _LOGGER.debug('[%s] NO2=%s', self._entity_id, value)
 
         index = 1
         if value <= 106:  # ppb
@@ -369,7 +400,7 @@ class Iaquk:
         return index
 
     @property
-    def _co_index(self):
+    def _co_index(self) -> Optional[int]:
         """Transform indoor CO values to IAQ points according
         to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
         entity_id = self._sources.get(CONF_CO)
@@ -377,10 +408,11 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id)
-        _LOGGER.debug('[%s] CO=%s', self._entity_id, value)
+        value = self._get_number_state(entity_id, 'ppm')
         if value is None:
             return None
+
+        # _LOGGER.debug('[%s] CO=%s', self._entity_id, value)
 
         index = 1
         if value == 0:  # ppm
@@ -390,18 +422,19 @@ class Iaquk:
         return index
 
     @property
-    def _hcho_index(self):
-        """Transform indoor Formaldegyde (HCHO) values to IAQ points according
+    def _hcho_index(self) -> Optional[int]:
+        """Transform indoor Formaldehyde (HCHO) values to IAQ points according
         to Indoor Air Quality UK: http://www.iaquk.org.uk/ """
         entity_id = self._sources.get(CONF_HCHO)
 
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id)
-        _LOGGER.debug('[%s] HCHO=%s', self._entity_id, value)
+        value = self._get_number_state(entity_id, 'ppm')
         if value is None:
             return None
+
+        # _LOGGER.debug('[%s] HCHO=%s', self._entity_id, value)
 
         index = 1
         if value <= 0.024:  # ppm
@@ -423,10 +456,11 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id)
-        _LOGGER.debug('[%s] Radon=%s', self._entity_id, value)
+        value = self._get_number_state(entity_id, 'Bq/m3')
         if value is None:
             return None
+
+        # _LOGGER.debug('[%s] Radon=%s', self._entity_id, value)
 
         index = 1
         if value == 0:  # Bq/m3
