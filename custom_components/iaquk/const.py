@@ -28,7 +28,10 @@ LEVEL_FAIR = "Fair"
 LEVEL_POOR = "Poor"
 LEVEL_INADEQUATE = "Inadequate"
 
-UNIT_PPM = 'ppm'
+UNIT_PPM = {
+    'ppm': 1,
+    'ppb': 0.001,
+}
 UNIT_PPB = {
     'ppb': 1,
     'ppm': 1000,
