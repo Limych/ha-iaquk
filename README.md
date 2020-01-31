@@ -76,13 +76,14 @@ iaquk:
       tvoc: sensor.kitchen_tvoc
     sensors:
       - iaq_level
+
   livingroom:
     name: "Living Room"
     sources:
-      temperature: sensor.livingroom_temperature
-      humidity: sensor.livingroom_humidity
-      co2: sensor.livingroom_eco2
-      tvoc: sensor.livingroom_tvoc
+      hcho: sensor.livingroom_formaldehyde
+      pm:
+        - sensor.livingroom_pm25
+        - sensor.livingroom_pm10
 ```
 
 ### Configuration variables
