@@ -6,7 +6,7 @@ https://github.com/Limych/ha-iaquk
 """
 
 import logging
-from typing import Optional
+from typing import Optional, Dict, Any
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -23,7 +23,8 @@ from homeassistant.util.temperature import convert as convert_temperature
 from .const import DOMAIN, VERSION, ISSUE_URL, SUPPORT_LIB_URL, CONF_SOURCES, \
     DATA_IAQUK, CONF_CO2, CONF_TEMPERATURE, CONF_HUMIDITY, CONF_TVOC, \
     LEVEL_INADEQUATE, LEVEL_POOR, LEVEL_FAIR, LEVEL_GOOD, LEVEL_EXCELLENT, \
-    CONF_NO2, CONF_PM, CONF_CO, CONF_HCHO, CONF_RADON
+    CONF_NO2, CONF_PM, CONF_CO, CONF_HCHO, CONF_RADON, UNIT_PPM, UNIT_PPB, \
+    UNIT_MGM3, ATTR_SOURCES_USED, ATTR_SOURCES_SET
 from .sensor import SENSORS
 
 _LOGGER = logging.getLogger(__name__)
@@ -116,6 +117,7 @@ class Iaquk:
         self._sources = sources
 
         self._iaq_index = None
+        self._iaq_sources = 0
         self._added = False
 
     def async_added_to_hass(self):
@@ -183,23 +185,33 @@ class Iaquk:
             return LEVEL_GOOD
         return LEVEL_EXCELLENT
 
+    @property
+    def state_attributes(self) -> Optional[Dict[str, Any]]:
+        """Return the state attributes."""
+        state_attr = {
+            ATTR_SOURCES_SET: len(self._sources),
+            ATTR_SOURCES_USED: self._iaq_sources,
+        }
+        return state_attr
+
     def update(self):
         """Update index state."""
         _LOGGER.debug('[%s] State update', self._entity_id)
 
+        iaq = 0
         sources = 0
-        iaq = 65
         for src in self._sources:
             index = self.__getattribute__('_%s_index' % src)
             _LOGGER.debug('[%s] %s_index=%s', self._entity_id, src, index)
-            if index in range(1, 5):
+            if index is not None:
+                iaq += index
                 sources += 1
-                iaq = (iaq * index) / 5
 
-        if sources:
-            self._iaq_index = int(iaq)
+        if iaq:
+            self._iaq_index = int((65 * iaq) / (5 * sources))
+            self._iaq_sources = int(sources)
             _LOGGER.debug('[%s] Update IAQ index to %d (%d sources used)',
-                          self._entity_id, self._iaq_index, sources)
+                          self._entity_id, self._iaq_index, self._iaq_sources)
 
     @staticmethod
     def _has_state(state) -> bool:
@@ -208,8 +220,14 @@ class Iaquk:
             state is not None \
             and state not in [STATE_UNKNOWN, STATE_UNAVAILABLE]
 
-    def _get_number_state(self, entity_id, entity_unit=None) -> Optional[float]:
+    def _get_number_state(self, entity_id, entity_unit=None, source_type='') \
+            -> Optional[float]:
         """Convert value to number."""
+        if entity_unit is not None and not isinstance(entity_unit, dict):
+            entity_unit = {
+                entity_unit: 1
+            }
+
         entity = self._hass.states.get(entity_id)
         if not isinstance(entity, State):
             return None
@@ -221,14 +239,20 @@ class Iaquk:
         if not self._has_state(value):
             return None
 
-        if entity_unit is not None and entity_unit != unit:
-            raise ValueError(
-                UNIT_NOT_RECOGNIZED_TEMPLATE.format(unit, "source sensor's"))
+        if entity_unit is not None and unit not in entity_unit:
+            _LOGGER.error('Entity %s has inappropriate "%s" units '
+                          'for %s source. Ignored.', entity_id, unit,
+                          source_type)
+            return None
 
         try:
-            return float(value)
+            value = float(value)
         except:  # pylint: disable=w0702
             return None
+
+        if entity_unit is not None:
+            value *= entity_unit[unit]
+        return value
 
     @property
     def _temperature_index(self) -> Optional[int]:
@@ -277,7 +301,7 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id, '%')
+        value = self._get_number_state(entity_id, '%', CONF_HUMIDITY)
         if value is None:
             return None
 
@@ -303,7 +327,7 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id, 'ppm')
+        value = self._get_number_state(entity_id, UNIT_PPM, CONF_CO2)
         if value is None:
             return None
 
@@ -329,7 +353,7 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id, 'ppb')
+        value = self._get_number_state(entity_id, UNIT_PPB, CONF_TVOC)
         if value is None:
             return None
 
@@ -357,7 +381,7 @@ class Iaquk:
 
         values = []
         for eid in entity_ids:
-            val = self._get_number_state(eid, 'µg/m3')
+            val = self._get_number_state(eid, UNIT_MGM3, CONF_PM)
             if val is not None:
                 values.append(val)
         if not values:
@@ -386,7 +410,7 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id, 'ppb')
+        value = self._get_number_state(entity_id, UNIT_PPB, CONF_NO2)
         if value is None:
             return None
 
@@ -408,7 +432,7 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id, 'ppm')
+        value = self._get_number_state(entity_id, UNIT_PPM, CONF_NO2)
         if value is None:
             return None
 
@@ -430,7 +454,7 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id, 'ppm')
+        value = self._get_number_state(entity_id, UNIT_PPM, CONF_HCHO)
         if value is None:
             return None
 
