@@ -36,7 +36,7 @@ UNIT_PPB = {
     'ppb': 1,
     'ppm': 1000,
 }
-UNIT_MGM3 = {
+UNIT_UGM3 = {
     'µg/m3': 1,
     'µg/m³': 1
 }

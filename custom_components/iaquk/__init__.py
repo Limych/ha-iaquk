@@ -23,7 +23,7 @@ from homeassistant.util.temperature import convert as convert_temperature
 from .const import DOMAIN, VERSION, ISSUE_URL, SUPPORT_LIB_URL, CONF_SOURCES, \
     DATA_IAQUK, CONF_CO2, CONF_TEMPERATURE, CONF_HUMIDITY, CONF_TVOC, \
     LEVEL_INADEQUATE, LEVEL_POOR, LEVEL_FAIR, LEVEL_GOOD, LEVEL_EXCELLENT, \
-    CONF_NO2, CONF_PM, CONF_CO, CONF_HCHO, UNIT_PPM, UNIT_PPB, UNIT_MGM3, \
+    CONF_NO2, CONF_PM, CONF_CO, CONF_HCHO, UNIT_PPM, UNIT_PPB, UNIT_UGM3, \
     ATTR_SOURCES_USED, ATTR_SOURCES_SET
 from .sensor import SENSORS
 
@@ -380,7 +380,7 @@ class Iaquk:
 
         values = []
         for eid in entity_ids:
-            val = self._get_number_state(eid, UNIT_MGM3, CONF_PM)
+            val = self._get_number_state(eid, UNIT_UGM3, CONF_PM)
             if val is not None:
                 values.append(val)
         if not values:
