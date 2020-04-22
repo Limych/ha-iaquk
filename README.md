@@ -76,13 +76,14 @@ iaquk:
       tvoc: sensor.kitchen_tvoc
     sensors:
       - iaq_level
+
   livingroom:
     name: "Living Room"
     sources:
-      temperature: sensor.livingroom_temperature
-      humidity: sensor.livingroom_humidity
-      co2: sensor.livingroom_eco2
-      tvoc: sensor.livingroom_tvoc
+      hcho: sensor.livingroom_formaldehyde
+      pm:
+        - sensor.livingroom_pm25
+        - sensor.livingroom_pm10
 ```
 
 ### Configuration variables
@@ -113,27 +114,27 @@ You can create as many groups as you need. But each group must have an unique na
 > **co2**:\
 > _(string) (Optional)_\
 > Room Carbon Dioxide (CO<sub>2</sub>) sensor entity ID.\
-> Required sensor's unit of measurement: ppm
+> Required sensor's unit of measurement: ppm, ppb, mg/m<sup>3</sup> or µg/m<sup>3</sup>
 >
 > **co**:\
 > _(string) (Optional)_\
 > Room Carbon Monoxide (CO) sensor entity ID.\
-> Required sensor's unit of measurement: ppm
+> Required sensor's unit of measurement: ppm, ppb, mg/m<sup>3</sup> or µg/m<sup>3</sup>
 >
 > **no2**:\
 > _(string) (Optional)_\
 > Room Nitrogen Dioxide (NO<sub>2</sub>) sensor entity ID.\
-> Required sensor's unit of measurement: ppb
+> Required sensor's unit of measurement: ppm, ppb, mg/m<sup>3</sup> or µg/m<sup>3</sup>
 >
 > **tvoc**:\
 > _(string) (Optional)_\
 > Room tVOC sensor entity ID.\
-> Required sensor's unit of measurement: ppb
+> Required sensor's unit of measurement: ppm, ppb, mg/m<sup>3</sup> or µg/m<sup>3</sup>
 >
 > **hcho**:\
 > _(string) (Optional)_\
 > Room Formaldehyde (HCHO; CH<sub>2</sub>O) sensor entity ID.\
-> Required sensor's unit of measurement: ppm
+> Required sensor's unit of measurement: ppm, ppb, mg/m<sup>3</sup> or µg/m<sup>3</sup>
 >
 > **radon**:\
 > _(string) (Optional)_\
@@ -143,7 +144,7 @@ You can create as many groups as you need. But each group must have an unique na
 > **pm**:\
 > _(string | list) (Optional)_\
 > Room particulate matter sensors entity IDs.\
-> Required sensor's unit of measurement: µg/m<sup>3</sup>
+> Required sensor's unit of measurement: mg/m<sup>3</sup> or µg/m<sup>3</sup>
 
 **sensors**:\
   _(list) (Optional)_\
@@ -178,6 +179,29 @@ custom_updater:
     - https://raw.githubusercontent.com/Limych/ha-iaquk/master/tracker.json
 ```
 
+## License
+
+MIT License
+
+Copyright (c) 2019–2020 Andrey "Limych" Khrolenok
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 [forum-support]: https://community.home-assistant.io/t/indoor-air-quality-sensor-component/160474
 [hacs]: https://github.com/custom-components/hacs

@@ -1,6 +1,6 @@
 {
     "iaquk": {
-        "version": "1.1.2",
+        "version": "1.2.1",
         "local_location": "/custom_components/iaquk/__init__.py",
         "remote_location": "https://raw.githubusercontent.com/Limych/ha-iaquk/master/custom_components/iaquk/__init__.py",
         "visit_repo": "https://github.com/Limych/ha-iaquk",
