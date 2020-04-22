@@ -2,7 +2,7 @@
 
 # Base component constants
 DOMAIN = "iaquk"
-VERSION = "1.2.1"
+VERSION = "1.3.0"
 ISSUE_URL = "https://github.com/Limych/ha-iaquk/issues"
 ATTRIBUTION = None
 DATA_IAQUK = 'iaquk'
@@ -18,6 +18,7 @@ CONF_PM = "pm"
 CONF_NO2 = "no2"
 CONF_CO = "co"
 CONF_HCHO = "hcho"  # Formaldehyde
+CONF_RADON = "radon"
 
 ATTR_SOURCES_SET = 'sources_set'
 ATTR_SOURCES_USED = 'sources_used'
