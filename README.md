@@ -114,32 +114,32 @@ You can create as many groups as you need. But each group must have an unique na
 > **co2**:\
 > _(string) (Optional)_\
 > Room Carbon Dioxide (CO<sub>2</sub>) sensor entity ID.\
-> Required sensor's unit of measurement: ppm or ppb
+> Required sensor's unit of measurement: ppm, ppb, mg/m<sup>3</sup> or µg/m<sup>3</sup>
 >
 > **co**:\
 > _(string) (Optional)_\
 > Room Carbon Monoxide (CO) sensor entity ID.\
-> Required sensor's unit of measurement: ppm or ppb
+> Required sensor's unit of measurement: ppm, ppb, mg/m<sup>3</sup> or µg/m<sup>3</sup>
 >
 > **no2**:\
 > _(string) (Optional)_\
 > Room Nitrogen Dioxide (NO<sub>2</sub>) sensor entity ID.\
-> Required sensor's unit of measurement: ppm or ppb
+> Required sensor's unit of measurement: ppm, ppb, mg/m<sup>3</sup> or µg/m<sup>3</sup>
 >
 > **tvoc**:\
 > _(string) (Optional)_\
 > Room tVOC sensor entity ID.\
-> Required sensor's unit of measurement: ppm or ppb
+> Required sensor's unit of measurement: ppm, ppb, mg/m<sup>3</sup> or µg/m<sup>3</sup>
 >
 > **hcho**:\
 > _(string) (Optional)_\
 > Room Formaldehyde (HCHO; CH<sub>2</sub>O) sensor entity ID.\
-> Required sensor's unit of measurement: ppm or ppb
+> Required sensor's unit of measurement: ppm, ppb, mg/m<sup>3</sup> or µg/m<sup>3</sup>
 >
 > **pm**:\
 > _(string | list) (Optional)_\
 > Room particulate matter sensors entity IDs.\
-> Required sensor's unit of measurement: µg/m<sup>3</sup>
+> Required sensor's unit of measurement: mg/m<sup>3</sup> or µg/m<sup>3</sup>
 
 **sensors**:\
   _(list) (Optional)_\
