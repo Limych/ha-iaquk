@@ -24,7 +24,8 @@ from .const import DOMAIN, VERSION, ISSUE_URL, SUPPORT_LIB_URL, CONF_SOURCES, \
     DATA_IAQUK, CONF_CO2, CONF_TEMPERATURE, CONF_HUMIDITY, CONF_TVOC, \
     LEVEL_INADEQUATE, LEVEL_POOR, LEVEL_FAIR, LEVEL_GOOD, LEVEL_EXCELLENT, \
     CONF_NO2, CONF_PM, CONF_CO, CONF_HCHO, UNIT_PPM, UNIT_PPB, UNIT_UGM3, \
-    ATTR_SOURCES_USED, ATTR_SOURCES_SET
+    ATTR_SOURCES_USED, ATTR_SOURCES_SET, MWEIGTH_TVOC, MWEIGTH_HCHO, \
+    MWEIGTH_CO, MWEIGTH_NO2, MWEIGTH_CO2
 from .sensor import SENSORS
 
 _LOGGER = logging.getLogger(__name__)
@@ -219,9 +220,10 @@ class Iaquk:
             state is not None \
             and state not in [STATE_UNKNOWN, STATE_UNAVAILABLE]
 
-    def _get_number_state(self, entity_id, entity_unit=None, source_type='') \
-            -> Optional[float]:
+    def _get_number_state(self, entity_id, entity_unit=None, source_type='',
+                          mweight=None) -> Optional[float]:
         """Convert value to number."""
+        target_unit = None
         if entity_unit is not None and not isinstance(entity_unit, dict):
             entity_unit = {
                 entity_unit: 1
@@ -238,19 +240,32 @@ class Iaquk:
         if not self._has_state(value):
             return None
 
-        if entity_unit is not None and unit not in entity_unit:
-            _LOGGER.error('Entity %s has inappropriate "%s" units '
-                          'for %s source. Ignored.', entity_id, unit,
-                          source_type)
-            return None
+        if entity_unit is not None:
+            target_unit = next(iter(entity_unit))
+            if unit not in entity_unit:
+                if mweight is None:
+                    _LOGGER.error('Entity %s has inappropriate "%s" units '
+                                  'for %s source. Ignored.', entity_id, unit,
+                                  source_type)
+                    return None
+                else:
+                    entity_unit = entity_unit.copy()
+                    if 'ppb' in (unit, target_unit):
+                        mweight /= 1000
+                    if unit in {'ppm', 'ppb'}:
+                        entity_unit[unit] = 0.0409 * mweight
+                    else:
+                        entity_unit[unit] = 24.45 / mweight
 
         try:
             value = float(value)
         except:  # pylint: disable=w0702
             return None
 
-        if entity_unit is not None:
+        if entity_unit is not None and unit != target_unit:
             value *= entity_unit[unit]
+            _LOGGER.debug('[%s] %s=%s %s (converted)', self._entity_id,
+                          entity_id, value, target_unit)
         return value
 
     @property
@@ -326,7 +341,8 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id, UNIT_PPM, CONF_CO2)
+        value = self._get_number_state(
+            entity_id, UNIT_PPM, CONF_CO2, mweight=MWEIGTH_CO2)
         if value is None:
             return None
 
@@ -352,7 +368,8 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id, UNIT_PPB, CONF_TVOC)
+        value = self._get_number_state(
+            entity_id, UNIT_PPB, CONF_TVOC, mweight=MWEIGTH_TVOC)
         if value is None:
             return None
 
@@ -409,7 +426,8 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id, UNIT_PPB, CONF_NO2)
+        value = self._get_number_state(
+            entity_id, UNIT_PPB, CONF_NO2, mweight=MWEIGTH_NO2)
         if value is None:
             return None
 
@@ -431,7 +449,8 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id, UNIT_PPM, CONF_NO2)
+        value = self._get_number_state(
+            entity_id, UNIT_PPM, CONF_CO, mweight=MWEIGTH_CO)
         if value is None:
             return None
 
@@ -453,19 +472,20 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id, UNIT_PPM, CONF_HCHO)
+        value = self._get_number_state(
+            entity_id, UNIT_PPB, CONF_HCHO, mweight=MWEIGTH_HCHO)
         if value is None:
             return None
 
         # _LOGGER.debug('[%s] HCHO=%s', self._entity_id, value)
 
         index = 1
-        if value <= 0.024:  # ppm
+        if value <= 24:  # ppb
             index = 5
-        elif value <= 0.06:  # ppm
+        elif value <= 60:  # ppb
             index = 4
-        elif value <= 0.12:  # ppm
+        elif value <= 120:  # ppb
             index = 3
-        elif value <= 0.24:  # ppm
+        elif value <= 240:  # ppb
             index = 2
         return index
