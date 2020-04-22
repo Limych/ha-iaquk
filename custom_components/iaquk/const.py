@@ -18,6 +18,7 @@ CONF_PM = "pm"
 CONF_NO2 = "no2"
 CONF_CO = "co"
 CONF_HCHO = "hcho"  # Formaldehyde
+CONF_RADON = "radon"
 
 ATTR_SOURCES_SET = 'sources_set'
 ATTR_SOURCES_USED = 'sources_used'
