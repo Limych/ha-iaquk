@@ -168,7 +168,7 @@ class Iaquk:
         """Get IAQ index."""
         return self._iaq_index
 
-    # pylint: disable=r1705
+    # pylint: disable=R1705
     @property
     def iaq_level(self) -> Optional[str]:
         """Get IAQ level."""
@@ -244,6 +244,7 @@ class Iaquk:
         if entity_unit is not None:
             target_unit = next(iter(entity_unit))
             if unit not in entity_unit:
+                # pylint: disable=R1705
                 if mweight is None:
                     _LOGGER.error('Entity %s has inappropriate "%s" units '
                                   'for %s source. Ignored.', entity_id, unit,
@@ -254,13 +255,13 @@ class Iaquk:
                     if 'ppb' in (unit, target_unit):
                         mweight /= 1000
                     if unit in {'ppm', 'ppb'}:
-                        entity_unit[unit] = 0.0409 * mweight
+                        entity_unit[unit] = mweight / 24.45
                     else:
                         entity_unit[unit] = 24.45 / mweight
 
         try:
             value = float(value)
-        except:  # pylint: disable=w0702
+        except:  # pylint: disable=W0702
             return None
 
         if entity_unit is not None and unit != target_unit:
