@@ -2,7 +2,7 @@
 
 # Base component constants
 DOMAIN = "iaquk"
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 ISSUE_URL = "https://github.com/Limych/ha-iaquk/issues"
 ATTRIBUTION = None
 DATA_IAQUK = 'iaquk'
@@ -54,7 +54,7 @@ UNIT_MGM3 = {
     'µg/m^3': 1000,
 }
 
-MWEIGTH_TVOC = 78.9516      # g/mol
+MWEIGTH_TVOC = 56.1060      # g/mol
 MWEIGTH_HCHO = 30.0260      # g/mol
 MWEIGTH_CO = 28.0100        # g/mol
 MWEIGTH_NO2 = 46.0100       # g/mol
