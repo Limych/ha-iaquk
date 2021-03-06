@@ -1,11 +1,30 @@
 """Constants for calculate IAQ UK index."""
 
 # Base component constants
+NAME = "Indoor Air Quality UK Index"
 DOMAIN = "iaquk"
-VERSION = "dev"
+VERSION = "1.3.5.dev0"
 ISSUE_URL = "https://github.com/Limych/ha-iaquk/issues"
-ATTRIBUTION = None
 
+STARTUP_MESSAGE = f"""
+-------------------------------------------------------------------
+{NAME}
+Version: {VERSION}
+This is a custom integration!
+If you have ANY issues with this you need to open an issue here:
+{ISSUE_URL}
+-------------------------------------------------------------------
+"""
+
+# Icons
+
+# Device classes
+BINARY_SENSOR_DEVICE_CLASS = "connectivity"
+
+# Platforms
+PLATFORMS = [BINARY_SENSOR, SENSOR]
+
+# Configuration and options
 CONF_SOURCES = "sources"
 CONF_TEMPERATURE = "temperature"
 CONF_HUMIDITY = "humidity"
@@ -17,8 +36,12 @@ CONF_CO = "co"
 CONF_HCHO = "hcho"  # Formaldehyde
 CONF_RADON = "radon"
 
+# Defaults
+
+# Attributes
 ATTR_SOURCES_SET = "sources_set"
 ATTR_SOURCES_USED = "sources_used"
+
 
 LEVEL_EXCELLENT = "Excellent"
 LEVEL_GOOD = "Good"

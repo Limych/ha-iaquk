@@ -2,66 +2,48 @@
 
 # Indoor Air Quality Sensor Component for Home Assistant
 
-[![GitHub Release](https://img.shields.io/github/tag-date/Limych/ha-iaquk?label=release&style=popout)](https://github.com/Limych/ha-iaquk/releases)
-[![GitHub Activity](https://img.shields.io/github/commit-activity/y/Limych/ha-iaquk.svg?style=popout)](https://github.com/Limych/ha-iaquk/commits/master)
-[![License](https://img.shields.io/github/license/Limych/ha-iaquk.svg?style=popout)](LICENSE)
-![Requires.io](https://img.shields.io/requires/github/Limych/ha-iaquk)
+[![GitHub Release][releases-shield]][releases]
+[![GitHub Activity][commits-shield]][commits]
+[![License][license-shield]](LICENSE.md)
 
-[![hacs](https://img.shields.io/badge/HACS-Default-orange.svg?style=popout)][hacs]
-![Project Maintenance](https://img.shields.io/badge/maintainer-Andrey%20Khrolenok%20%40Limych-blue.svg?style=popout)
+[![hacs][hacs-shield]][hacs]
+[![Project Maintenance][maintenance-shield]][user_profile]
 
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/Limych/ha-iaquk?style=popout)](https://github.com/Limych/ha-iaquk/pulls)
-[![Bugs](https://img.shields.io/github/issues/Limych/ha-iaquk/bug.svg?colorB=red&label=bugs&style=popout)](https://github.com/Limych/ha-iaquk/issues?q=is%3Aopen+is%3Aissue+label%3ABug)
-
-[![Community Forum](https://img.shields.io/badge/community-forum-brightgreen.svg?style=popout)][forum-support]
+[![Community Forum][forum-shield]][forum]
 
 This component allows you to evaluate the air quality in any room, using data from various sensors installed there. Such as temperature, humidity, carbon dioxide sensors, etc.
 
 The index is calculating in accordance with the [IAQ UK organization methodology](IAQ_Rating_Index.pdf).
 
-I also suggest you [visit the support topic][forum-support] on the community forum.
+I also suggest you [visit the support topic][forum] on the community forum.
 
-![](iaquk.jpg)
+![][exampleimg]
 
 ## Installation
 
-### HACS - Recommended
+### Install from HACS (recommended)
 
-1. Have [HACS](https://hacs.xyz) installed, this will allow you to easily manage and track updates.
+1. Have [HACS][hacs] installed, this will allow you to easily manage and track updates.
 1. Search for "Indoor Air Quality UK Index".
 1. Click Install below the found integration.
-1. Configure using the configuration instructions below.
-1. Restart Home-Assistant.
 
-### Manual
+... then if you want to use `configuration.yaml` to configure sensor...
+1. Add `iaquk` sensor to your `configuration.yaml` file. See configuration examples below.
+1. Restart Home Assistant
+
+### Manual installation
 
 1. Using the tool of choice open the directory (folder) for your HA configuration (where you find `configuration.yaml`).
-2. If you do not have a `custom_components` directory (folder) there, you need to create it.
-3. In the `custom_components` directory (folder) create a new folder called `iaquk`.
-4. Download _all_ the files from the `custom_components/iaquk/` directory (folder) in this repository.
-5. Place the files you downloaded in the new directory (folder) you created.
-1. Configure using the configuration instructions below.
-1. Restart Home-Assistant.
+1. If you do not have a `custom_components` directory (folder) there, you need to create it.
+1. In the `custom_components` directory (folder) create a new folder called `iaquk`.
+1. Download file `iaquk.zip` from the [latest release section][releases-latest] in this repository.
+1. Extract _all_ files from this archive you downloaded in the directory (folder) you created.
 
-Using your HA configuration directory (folder) as a starting point you should now also have this:
+... then if you want to use `configuration.yaml` to configure sensor...
+1. Add `iaquk` sensor to your `configuration.yaml` file. See configuration examples below.
+1. Restart Home Assistant
 
-```text
-custom_components/iaquk/__init__.py
-custom_components/iaquk/const.py
-custom_components/iaquk/manifest.json
-custom_components/iaquk/sensor.py
-```
-
-<p align="center">* * *</p>
-I put a lot of work into making this repo and component available and updated to inspire and help others! I will be glad to receive thanks from you — it will give me new strength and add enthusiasm:
-<p align="center"><br>
-<a href="https://www.patreon.com/join/limych?" target="_blank"><img src="http://khrolenok.ru/support_patreon.png" alt="Patreon" width="250" height="48"></a>
-<br>or&nbsp;support via Bitcoin or Etherium:<br>
-<a href="https://sochain.com/a/mjz640g" target="_blank"><img src="http://khrolenok.ru/support_bitcoin.png" alt="Bitcoin" width="150"><br>
-16yfCfz9dZ8y8yuSwBFVfiAa3CNYdMh7Ts</a>
-</p>
-
-## Usage
+### Configuration Examples
 
 To use this component in your installation, add the following to your `configuration.yaml` file:
 
@@ -93,9 +75,8 @@ Each room in the settings is defined by its own named group of parameters. You c
 You can create as many groups as you need. But each group must have an unique name.
 
 **name**:\
-  _(string) (Optional)_\
-  Friendly name to use in the frontend.\
-  _Default value: deslugified group name_
+  _(string) (Optional) (Default value: deslugified group name)_\
+  Friendly name to use in the frontend.
 
 **sources**:\
   _(dictionary) (Required)_\
@@ -147,9 +128,8 @@ You can create as many groups as you need. But each group must have an unique na
 > Required sensor's unit of measurement: mg/m<sup>3</sup> or µg/m<sup>3</sup>
 
 **sensors**:\
-  _(list) (Optional)_\
-  List of sensors  you need to create for the output. The following sensors can be added:\
-  _Default value: all sensors below_
+  _(list) (Optional) (Default value: all sensors below)_\
+  List of sensors  you need to create for the output. The following sensors can be added:
 
 > **iaq_index**:\
 > The sensor displays the air quality in numerical form from 1 to 65. The higher the value, the better the air quality.
@@ -160,13 +140,38 @@ You can create as many groups as you need. But each group must have an unique na
 **_Note_**:\
 The icon of `iaq_level` sensor changes its image depending on the value of the sensor.
 
-## Contributions are welcome!
-
-If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
-
 ## Track updates
 
 You can automatically track new versions of this component and update it by [HACS][hacs].
+
+## Troubleshooting
+
+To enable debug logs use this configuration:
+```yaml
+# Example configuration.yaml entry
+logger:
+  default: info
+  logs:
+    custom_components.integration_blueprint: debug
+```
+... then restart HA.
+
+## Contributions are welcome!
+
+This is an active open-source project. We are always open to people who want to
+use the code or contribute to it.
+
+We have set up a separate document containing our
+[contribution guidelines](CONTRIBUTING.md).
+
+Thank you for being involved! :heart_eyes:
+
+## Authors & contributors
+
+The original setup of this component is by [Andrey "Limych" Khrolenok](https://github.com/Limych).
+
+For a full list of all authors and contributors,
+check [the contributor's page][contributors].
 
 ## License
 
@@ -192,5 +197,23 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-[forum-support]: https://community.home-assistant.io/t/indoor-air-quality-sensor-component/160474
-[hacs]: https://github.com/custom-components/hacs
+***
+
+[component]: https://github.com/Limych/ha-iaquk
+[commits-shield]: https://img.shields.io/github/commit-activity/y/Limych/ha-iaquk.svg?style=popout
+[commits]: https://github.com/Limych/ha-iaquk/commits/master
+[hacs-shield]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=popout
+[hacs]: https://hacs.xyz
+[exampleimg]: https://github.com/Limych/ha-iaquk/raw/master/iaquk.jpg
+[forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=popout
+[forum]: https://community.home-assistant.io/t/indoor-air-quality-sensor-component/160474
+[license]: https://github.com/Limych/ha-iaquk/blob/main/LICENSE.md
+[license-shield]: https://img.shields.io/badge/license-Creative_Commons_BY--NC--SA_License-lightgray.svg?style=popout
+[maintenance-shield]: https://img.shields.io/badge/maintainer-Andrey%20Khrolenok%20%40Limych-blue.svg?style=popout
+[releases-shield]: https://img.shields.io/github/release/Limych/ha-iaquk.svg?style=popout
+[releases]: https://github.com/Limych/ha-iaquk/releases
+[releases-latest]: https://github.com/Limych/ha-iaquk/releases/latest
+[user_profile]: https://github.com/Limych
+[report_bug]: https://github.com/Limych/ha-iaquk/issues/new?template=bug_report.md
+[suggest_idea]: https://github.com/Limych/ha-iaquk/issues/new?template=feature_request.md
+[contributors]: https://github.com/Limych/ha-iaquk/graphs/contributors
