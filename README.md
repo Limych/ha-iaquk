@@ -4,7 +4,7 @@
 
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]
-[![License][license-shield]](LICENSE.md)
+[![License][license-shield]][license]
 
 [![hacs][hacs-shield]][hacs]
 [![Project Maintenance][maintenance-shield]][user_profile]
@@ -152,7 +152,7 @@ To enable debug logs use this configuration:
 logger:
   default: info
   logs:
-    custom_components.integration_blueprint: debug
+    custom_components.iaquk: debug
 ```
 ... then restart HA.
 
@@ -177,7 +177,7 @@ check [the contributor's page][contributors].
 
 MIT License
 
-Copyright (c) 2019–2020 Andrey "Limych" Khrolenok
+Copyright (c) 2019–2021 Andrey "Limych" Khrolenok
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -202,12 +202,12 @@ SOFTWARE.
 [component]: https://github.com/Limych/ha-iaquk
 [commits-shield]: https://img.shields.io/github/commit-activity/y/Limych/ha-iaquk.svg?style=popout
 [commits]: https://github.com/Limych/ha-iaquk/commits/master
-[hacs-shield]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=popout
+[hacs-shield]: https://img.shields.io/badge/HACS-Default-orange.svg?style=popout
 [hacs]: https://hacs.xyz
 [exampleimg]: https://github.com/Limych/ha-iaquk/raw/master/iaquk.jpg
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=popout
 [forum]: https://community.home-assistant.io/t/indoor-air-quality-sensor-component/160474
-[license]: https://github.com/Limych/ha-iaquk/blob/main/LICENSE.md
+[license]: https://github.com/Limych/ha-iaquk/blob/main/LICENSE
 [license-shield]: https://img.shields.io/badge/license-Creative_Commons_BY--NC--SA_License-lightgray.svg?style=popout
 [maintenance-shield]: https://img.shields.io/badge/maintainer-Andrey%20Khrolenok%20%40Limych-blue.svg?style=popout
 [releases-shield]: https://img.shields.io/github/release/Limych/ha-iaquk.svg?style=popout
