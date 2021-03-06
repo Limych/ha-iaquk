@@ -3,7 +3,18 @@ default_config:
 logger:
   default: info
   logs:
-    custom_components.integration_blueprint: debug
+    custom_components.iaquk: debug
 
 # If you need to debug uncomment the line below (doc: https://www.home-assistant.io/integrations/debugpy/)
 # debugpy:
+
+sensor:
+  - platform: demo
+
+iaquk:
+  kitchen:
+    sources:
+      temperature: sensor.outside_temperature
+      humidity: sensor.outside_humidity
+      co2: sensor.kitchen_eco2
+      tvoc: sensor.kitchen_tvoc

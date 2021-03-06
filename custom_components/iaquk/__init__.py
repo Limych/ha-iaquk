@@ -6,57 +6,57 @@ https://github.com/Limych/ha-iaquk
 """
 
 import logging
-from typing import Optional, Dict, Any
+from typing import Any, Dict, List, Optional, Union
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.sensor import DOMAIN as SENSOR
 from homeassistant.const import (
+    ATTR_UNIT_OF_MEASUREMENT,
     CONF_NAME,
     CONF_SENSORS,
     EVENT_HOMEASSISTANT_START,
-    ATTR_UNIT_OF_MEASUREMENT,
+    PERCENTAGE,
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
     TEMP_CELSIUS,
     TEMP_FAHRENHEIT,
-    UNIT_NOT_RECOGNIZED_TEMPLATE,
     TEMPERATURE,
-    STATE_UNKNOWN,
-    STATE_UNAVAILABLE,
+    UNIT_NOT_RECOGNIZED_TEMPLATE,
 )
-from homeassistant.core import callback, State
+from homeassistant.core import State, callback
 from homeassistant.helpers import discovery
 from homeassistant.helpers.event import async_track_state_change
 from homeassistant.util.temperature import convert as convert_temperature
 
 from .const import (
-    DOMAIN,
-    VERSION,
-    ISSUE_URL,
-    CONF_SOURCES,
+    ATTR_SOURCES_SET,
+    ATTR_SOURCES_USED,
+    CONF_CO,
     CONF_CO2,
-    CONF_TEMPERATURE,
+    CONF_HCHO,
     CONF_HUMIDITY,
-    CONF_TVOC,
-    LEVEL_INADEQUATE,
-    LEVEL_POOR,
-    LEVEL_FAIR,
-    LEVEL_GOOD,
-    LEVEL_EXCELLENT,
     CONF_NO2,
     CONF_PM,
-    CONF_CO,
-    CONF_HCHO,
     CONF_RADON,
-    UNIT_PPM,
-    UNIT_PPB,
-    UNIT_UGM3,
-    ATTR_SOURCES_USED,
-    ATTR_SOURCES_SET,
-    MWEIGTH_TVOC,
-    MWEIGTH_HCHO,
+    CONF_SOURCES,
+    CONF_TEMPERATURE,
+    CONF_TVOC,
+    DOMAIN,
+    LEVEL_EXCELLENT,
+    LEVEL_FAIR,
+    LEVEL_GOOD,
+    LEVEL_INADEQUATE,
+    LEVEL_POOR,
     MWEIGTH_CO,
-    MWEIGTH_NO2,
     MWEIGTH_CO2,
+    MWEIGTH_HCHO,
+    MWEIGTH_NO2,
+    MWEIGTH_TVOC,
+    STARTUP_MESSAGE,
+    UNIT_PPB,
+    UNIT_PPM,
+    UNIT_UGM3,
 )
 from .sensor import SENSORS
 
@@ -106,18 +106,14 @@ def _deslugify(string):
 
 async def async_setup(hass, config):
     """Set up component."""
-    # Print startup message
-    _LOGGER.info("Version %s", VERSION)
-    _LOGGER.info(
-        "If you have ANY issues with this, please report them here: %s", ISSUE_URL
-    )
+    if DOMAIN not in config:
+        return True
 
+    # Print startup message
+    _LOGGER.info(STARTUP_MESSAGE)
     hass.data.setdefault(DOMAIN, {})
 
     for object_id, cfg in config[DOMAIN].items():
-        if not cfg:
-            cfg = {}
-
         name = cfg.get(CONF_NAME, _deslugify(object_id))
         sources = cfg.get(CONF_SOURCES)
         sensors = cfg.get(CONF_SENSORS)
@@ -147,7 +143,9 @@ async def async_setup(hass, config):
 class Iaquk:
     """IAQ UK controller."""
 
-    def __init__(self, hass, entity_id: str, name: str, sources):
+    def __init__(
+        self, hass, entity_id: str, name: str, sources: Dict[str, Union[str, List[str]]]
+    ):
         """Initialize controller."""
         self._hass = hass
         self._entity_id = entity_id
@@ -245,7 +243,7 @@ class Iaquk:
                 if index is not None:
                     iaq += index
                     sources += 1
-            except Exception:  # pylint: disable=broad-except
+            except Exception:  # pylint: disable=broad-except; pragma: no cover
                 pass
 
         if iaq:
@@ -272,8 +270,8 @@ class Iaquk:
             entity_unit = {entity_unit: 1}
 
         entity = self._hass.states.get(entity_id)
-        if not isinstance(entity, State):
-            raise ValueError
+        if not isinstance(entity, State):  # pragma: no cover
+            raise ValueError("State must be instance of class State")
         value = entity.state
         unit = entity.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
         _LOGGER.debug(
@@ -285,21 +283,17 @@ class Iaquk:
         )
 
         if not self._has_state(value):
-            raise ValueError
+            raise ValueError("State is unknown")
 
         if entity_unit is not None:
             target_unit = next(iter(entity_unit))
             if unit not in entity_unit:
                 # pylint: disable=R1705
                 if mweight is None:
-                    _LOGGER.error(
+                    raise ValueError(
                         'Entity %s has inappropriate "%s" units '
-                        "for %s source. Ignored.",
-                        entity_id,
-                        unit,
-                        source_type,
+                        "for %s source. Ignored." % (entity_id, unit, source_type)
                     )
-                    raise ValueError
                 entity_unit = entity_unit.copy()
                 if "ppb" in (unit, target_unit):
                     mweight /= 1000
@@ -330,7 +324,7 @@ class Iaquk:
             return None
 
         entity = self._hass.states.get(entity_id)
-        value = self._get_number_state(entity_id)
+        value = self._get_number_state(entity_id, source_type=CONF_TEMPERATURE)
 
         entity_unit = entity.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
         if entity_unit not in (TEMP_CELSIUS, TEMP_FAHRENHEIT):
@@ -341,17 +335,14 @@ class Iaquk:
         if entity_unit != TEMP_CELSIUS:
             value = convert_temperature(value, entity_unit, TEMP_CELSIUS)
 
-        # _LOGGER.debug('[%s] temperature=%s %s', self._entity_id, value,
-        #               TEMP_CELSIUS)
-
         index = 1
         if 18 <= value <= 21:  # °C
             index = 5
-        elif value > 16 or value < 23:  # °C
+        elif 16 < value < 23:  # °C
             index = 4
-        elif value > 15 or value < 24:  # °C
+        elif 15 < value < 24:  # °C
             index = 3
-        elif value > 14 or value < 25:  # °C
+        elif 14 < value < 25:  # °C
             index = 2
         return index
 
@@ -363,21 +354,17 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id, "%", CONF_HUMIDITY)
-        if value is None:
-            return None
+        value = self._get_number_state(entity_id, PERCENTAGE, CONF_HUMIDITY)
 
-        # _LOGGER.debug('[%s] humidity=%s', self._entity_id, value)
-
-        index = 5
-        if value < 10 or value > 90:  # %
-            index = 1
-        elif value < 20 or value > 80:  # %
-            index = 2
-        elif value < 30 or value > 70:  # %
-            index = 3
-        elif value < 40 or value > 60:  # %
+        index = 1
+        if 40 <= value <= 60:  # %
+            index = 5
+        elif 30 <= value <= 70:  # %
             index = 4
+        elif 20 <= value <= 80:  # %
+            index = 3
+        elif 10 <= value <= 90:  # %
+            index = 2
         return index
 
     @property
@@ -391,10 +378,6 @@ class Iaquk:
         value = self._get_number_state(
             entity_id, UNIT_PPM, CONF_CO2, mweight=MWEIGTH_CO2
         )
-        if value is None:
-            return None
-
-        # _LOGGER.debug('[%s] CO2=%s', self._entity_id, value)
 
         index = 1
         if value <= 600:  # ppm
@@ -418,19 +401,15 @@ class Iaquk:
         value = self._get_number_state(
             entity_id, UNIT_PPB, CONF_TVOC, mweight=MWEIGTH_TVOC
         )
-        if value is None:
-            return None
-
-        # _LOGGER.debug('[%s] tVOC=%s', self._entity_id, value)
 
         index = 1
-        if value <= 65:  # ppb
+        if value <= 24:  # ppb
             index = 5
-        elif value <= 220:  # ppb
+        elif value <= 73:  # ppb
             index = 4
-        elif value <= 660:  # ppb
+        elif value <= 122:  # ppb
             index = 3
-        elif value <= 2200:  # ppb
+        elif value <= 245:  # ppb
             index = 2
         return index
 
@@ -439,18 +418,13 @@ class Iaquk:
         """Transform indoor particulate matters values to IAQ points."""
         entity_ids = self._sources.get(CONF_PM)
 
-        if entity_ids is None:
+        if entity_ids is None or entity_ids == []:
             return None
 
         values = []
         for eid in entity_ids:
             val = self._get_number_state(eid, UNIT_UGM3, CONF_PM)
-            if val is not None:
-                values.append(val)
-        if not values:
-            return None
-
-        # _LOGGER.debug('[%s] PM=%s', self._entity_id, values)
+            values.append(val)
 
         value = sum(values)
         index = 1
@@ -475,10 +449,6 @@ class Iaquk:
         value = self._get_number_state(
             entity_id, UNIT_PPB, CONF_NO2, mweight=MWEIGTH_NO2
         )
-        if value is None:
-            return None
-
-        # _LOGGER.debug('[%s] NO2=%s', self._entity_id, value)
 
         index = 1
         if value <= 106:  # ppb
@@ -495,16 +465,12 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id, UNIT_PPM, CONF_CO, mweight=MWEIGTH_CO)
-        if value is None:
-            return None
-
-        # _LOGGER.debug('[%s] CO=%s', self._entity_id, value)
+        value = self._get_number_state(entity_id, UNIT_PPB, CONF_CO, mweight=MWEIGTH_CO)
 
         index = 1
-        if value == 0:  # ppm
+        if value <= 785.7:  # ppb
             index = 5
-        elif value <= 6:  # ppm
+        elif value <= 6111:  # ppb
             index = 3
         return index
 
@@ -519,19 +485,15 @@ class Iaquk:
         value = self._get_number_state(
             entity_id, UNIT_PPB, CONF_HCHO, mweight=MWEIGTH_HCHO
         )
-        if value is None:
-            return None
-
-        # _LOGGER.debug('[%s] HCHO=%s', self._entity_id, value)
 
         index = 1
-        if value <= 24:  # ppb
+        if value <= 16:  # ppb
             index = 5
-        elif value <= 60:  # ppb
+        elif value <= 41:  # ppb
             index = 4
-        elif value <= 120:  # ppb
+        elif value <= 82:  # ppb
             index = 3
-        elif value <= 240:  # ppb
+        elif value <= 163:  # ppb
             index = 2
         return index
 
@@ -544,15 +506,11 @@ class Iaquk:
             return None
 
         value = self._get_number_state(entity_id, "Bq/m3")
-        if value is None:
-            return None
-
-        # _LOGGER.debug('[%s] Radon=%s', self._entity_id, value)
 
         index = 1
         if value == 0:  # Bq/m3
             index = 5
-        elif value <= 20:  # Bq/m3
+        elif value < 20:  # Bq/m3
             index = 3
         elif value <= 100:  # Bq/m3
             index = 2

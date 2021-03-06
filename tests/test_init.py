@@ -1,56 +1,400 @@
-"""Test integration_blueprint setup process."""
+"""Test integration setup process."""
+# pylint: disable=redefined-outer-name,protected-access
+
 import pytest
-from homeassistant.exceptions import ConfigEntryNotReady
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from homeassistant.const import (
+    ATTR_UNIT_OF_MEASUREMENT,
+    PERCENTAGE,
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
+    TEMP_CELSIUS,
+    TEMP_FAHRENHEIT,
+)
+from homeassistant.core import HomeAssistant
+from homeassistant.setup import async_setup_component
+from pytest import raises
+from pytest_homeassistant_custom_component.common import assert_setup_component
 
 from custom_components.iaquk import (
-    BlueprintDataUpdateCoordinator,
-    async_reload_entry,
-    async_setup_entry,
-    async_unload_entry,
+    ATTR_SOURCES_SET,
+    ATTR_SOURCES_USED,
+    CONF_CO,
+    CONF_CO2,
+    CONF_HCHO,
+    CONF_HUMIDITY,
+    CONF_NO2,
+    CONF_PM,
+    CONF_RADON,
+    CONF_SOURCES,
+    CONF_TEMPERATURE,
+    CONF_TVOC,
+    DOMAIN,
+    LEVEL_EXCELLENT,
+    LEVEL_FAIR,
+    LEVEL_GOOD,
+    LEVEL_INADEQUATE,
+    LEVEL_POOR,
+    Iaquk,
+    _deslugify,
 )
-from custom_components.iaquk.const import DOMAIN
-
-from .const import MOCK_CONFIG
 
 
-# We can pass fixtures as defined in conftest.py to tell pytest to use the fixture
-# for a given test. We can also leverage fixtures and mocks that are available in
-# Home Assistant using the pytest_homeassistant_custom_component plugin.
-# Assertions allow you to verify that the return value of whatever is on the left
-# side of the assertion matches with the right side.
-async def test_setup_unload_and_reload_entry(hass, bypass_get_data):
-    """Test entry setup and unload."""
-    # Create a mock entry so we don't have to go through config flow
-    config_entry = MockConfigEntry(domain=DOMAIN, data=MOCK_CONFIG, entry_id="test")
-
-    # Set up the entry and assert that the values set during setup are where we expect
-    # them to be. Because we have patched the BlueprintDataUpdateCoordinator.async_get_data
-    # call, no code from custom_components/integration_blueprint/api.py actually runs.
-    assert await async_setup_entry(hass, config_entry)
-    assert DOMAIN in hass.data and config_entry.entry_id in hass.data[DOMAIN]
-    assert isinstance(
-        hass.data[DOMAIN][config_entry.entry_id], BlueprintDataUpdateCoordinator
+@pytest.fixture()
+async def mock_sensors(hass: HomeAssistant):
+    """Mock sensor entity for tests."""
+    assert await async_setup_component(
+        hass,
+        "sensor",
+        {
+            "sensor": {
+                "platform": "template",
+                "sensors": {
+                    "test_monitored": {
+                        "value_template": "{{ 29.82 }}",
+                    },
+                    "test_monitored2": {
+                        "value_template": "{{ 29.82 }}",
+                    },
+                    "test_monitored3": {
+                        "value_template": "{{ 29.82 }}",
+                    },
+                },
+            }
+        },
     )
 
-    # Reload the entry and assert that the data from above is still there
-    assert await async_reload_entry(hass, config_entry) is None
-    assert DOMAIN in hass.data and config_entry.entry_id in hass.data[DOMAIN]
-    assert isinstance(
-        hass.data[DOMAIN][config_entry.entry_id], BlueprintDataUpdateCoordinator
-    )
 
-    # Unload the entry and verify that the data has been removed
-    assert await async_unload_entry(hass, config_entry)
-    assert config_entry.entry_id not in hass.data[DOMAIN]
+async def test__deslugify():
+    """Test deslugifying entity id."""
+    assert _deslugify("test") == "Test"
+    assert _deslugify("another_test") == "Another Test"
 
 
-async def test_setup_entry_exception(hass, error_on_get_data):
-    """Test ConfigEntryNotReady when API raises an exception during entry setup."""
-    config_entry = MockConfigEntry(domain=DOMAIN, data=MOCK_CONFIG, entry_id="test")
+async def test_async_setup_empty(hass: HomeAssistant):
+    """Test a successful setup component."""
+    await async_setup_component(hass, DOMAIN, {DOMAIN: {}})
+    await hass.async_block_till_done()
 
-    # In this case we are testing the condition where async_setup_entry raises
-    # ConfigEntryNotReady using the `error_on_get_data` fixture which simulates
-    # an error.
-    with pytest.raises(ConfigEntryNotReady):
-        assert await async_setup_entry(hass, config_entry)
+
+async def test_async_setup(hass: HomeAssistant):
+    """Test a successful setup component."""
+    config = {
+        "test": {
+            CONF_SOURCES: {
+                CONF_TEMPERATURE: "sensor.test_temperature",
+                CONF_PM: ["sensor.test_temperature"],
+            },
+        }
+    }
+    with assert_setup_component(1, DOMAIN):
+        await async_setup_component(hass, DOMAIN, {DOMAIN: config})
+        await hass.async_block_till_done()
+
+    await hass.async_start()
+    await hass.async_block_till_done()
+
+
+async def test_controller_init(hass: HomeAssistant):
+    """Test controller initialization."""
+    controller = Iaquk(hass, "test", "Test", {"": "sensor.test_monitored"})
+
+    expected_attributes = {
+        ATTR_SOURCES_SET: 1,
+        ATTR_SOURCES_USED: 0,
+    }
+
+    assert controller.unique_id == "test"
+    assert controller.name == "Test"
+    assert controller.iaq_index is None
+    assert controller.iaq_level is None
+    assert controller.state_attributes == expected_attributes
+
+
+async def test_update(hass: HomeAssistant, mock_sensors):
+    """Test update index state."""
+    entity_id = "sensor.test_monitored"
+    config = {
+        CONF_TEMPERATURE: entity_id,
+        CONF_HUMIDITY: entity_id + "2",
+        CONF_CO2: entity_id + "3",
+    }
+    controller = Iaquk(hass, "test", "Test", config)
+
+    hass.states.async_set(entity_id, 17, {ATTR_UNIT_OF_MEASUREMENT: TEMP_CELSIUS})
+    hass.states.async_set(entity_id + "2", 50, {ATTR_UNIT_OF_MEASUREMENT: PERCENTAGE})
+    hass.states.async_set(entity_id + "3", 800, {ATTR_UNIT_OF_MEASUREMENT: "ppm"})
+    controller.update()
+
+    expected_attributes = {
+        ATTR_SOURCES_SET: 3,
+        ATTR_SOURCES_USED: 3,
+    }
+
+    assert controller.iaq_index == 56
+    assert controller.iaq_level == LEVEL_GOOD
+    assert controller.state_attributes == expected_attributes
+
+    config = {
+        CONF_TEMPERATURE: entity_id,
+    }
+    controller = Iaquk(hass, "test", "Test", config)
+
+    expected_attributes = {
+        ATTR_SOURCES_SET: 1,
+        ATTR_SOURCES_USED: 1,
+    }
+
+    hass.states.async_set(entity_id, 18, {ATTR_UNIT_OF_MEASUREMENT: TEMP_CELSIUS})
+    controller.update()
+
+    assert controller.iaq_index == 65
+    assert controller.iaq_level == LEVEL_EXCELLENT
+    assert controller.state_attributes == expected_attributes
+
+    hass.states.async_set(entity_id, 16, {ATTR_UNIT_OF_MEASUREMENT: TEMP_CELSIUS})
+    controller.update()
+
+    assert controller.iaq_index == 39
+    assert controller.iaq_level == LEVEL_FAIR
+    assert controller.state_attributes == expected_attributes
+
+    hass.states.async_set(entity_id, 15, {ATTR_UNIT_OF_MEASUREMENT: TEMP_CELSIUS})
+    controller.update()
+
+    assert controller.iaq_index == 26
+    assert controller.iaq_level == LEVEL_POOR
+    assert controller.state_attributes == expected_attributes
+
+    hass.states.async_set(entity_id, 14, {ATTR_UNIT_OF_MEASUREMENT: TEMP_CELSIUS})
+    controller.update()
+
+    assert controller.iaq_index == 13
+    assert controller.iaq_level == LEVEL_INADEQUATE
+    assert controller.state_attributes == expected_attributes
+
+
+async def test__has_state():
+    """Test state detection."""
+    assert Iaquk._has_state(None) is False
+    assert Iaquk._has_state(STATE_UNKNOWN) is False
+    assert Iaquk._has_state(STATE_UNAVAILABLE) is False
+
+    assert Iaquk._has_state("") is True
+
+
+async def test__get_number_state(hass: HomeAssistant, mock_sensors):
+    """Test state conversion to number."""
+    entity_id = "sensor.test_monitored"
+    config = {
+        CONF_TEMPERATURE: entity_id,
+    }
+    controller = Iaquk(hass, "test", "Test", config)
+
+    assert controller._get_number_state(entity_id) == 29.82
+    with raises(ValueError):
+        controller._get_number_state(entity_id, "")
+    assert round(controller._get_number_state(entity_id, "", mweight=1), 2) == 729.10
+    assert controller._get_number_state(entity_id, "ppb", mweight=1) == 729099
+
+    hass.states.async_set(entity_id, STATE_UNKNOWN)
+    #
+    with raises(ValueError):
+        controller._get_number_state(entity_id)
+
+    hass.states.async_set(entity_id, 12.5, {ATTR_UNIT_OF_MEASUREMENT: "ppm"})
+    #
+    assert round(controller._get_number_state(entity_id, "", mweight=10), 2) == 5.11
+
+
+async def test__temperature_index(hass: HomeAssistant, mock_sensors):
+    """Test transform indoor temperature values to IAQ points."""
+    entity_id = "sensor.test_monitored"
+
+    controller = Iaquk(hass, "test", "Test", {CONF_HUMIDITY: entity_id})
+
+    assert controller._temperature_index is None
+
+    controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
+
+    hass.states.async_set(entity_id, 12.5, {ATTR_UNIT_OF_MEASUREMENT: "ppm"})
+    with raises(ValueError):
+        _ = controller._temperature_index
+
+    for i, value in enumerate([57, 59, 60, 63, 67]):
+        hass.states.async_set(
+            entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: TEMP_FAHRENHEIT}
+        )
+        assert controller._temperature_index == i + 1
+
+
+async def test__humidity_index(hass: HomeAssistant, mock_sensors):
+    """Test transform indoor humidity values to IAQ points."""
+    entity_id = "sensor.test_monitored"
+
+    controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
+
+    assert controller._humidity_index is None
+
+    controller = Iaquk(hass, "test", "Test", {CONF_HUMIDITY: entity_id})
+
+    hass.states.async_set(entity_id, 12.5, {ATTR_UNIT_OF_MEASUREMENT: TEMP_CELSIUS})
+    with raises(ValueError):
+        _ = controller._humidity_index
+
+    for i, value in enumerate([9.9, 19.9, 29.9, 39.9, 40]):
+        hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: PERCENTAGE})
+        assert controller._humidity_index == i + 1
+
+    for i, value in enumerate([90.1, 80.1, 70.1, 60.1, 60]):
+        hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: PERCENTAGE})
+        assert controller._humidity_index == i + 1
+
+
+async def test__co2_index(hass: HomeAssistant, mock_sensors):
+    """Test transform indoor eCO2 values to IAQ points."""
+    entity_id = "sensor.test_monitored"
+
+    controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
+
+    assert controller._co2_index is None
+
+    controller = Iaquk(hass, "test", "Test", {CONF_CO2: entity_id})
+
+    for i, value in enumerate([1801, 1800, 1500, 800, 600]):
+        hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "ppm"})
+        assert controller._co2_index == i + 1
+
+    for i, value in enumerate([1801, 1501, 801, 601, 600]):
+        hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "ppm"})
+        assert controller._co2_index == i + 1
+
+
+async def test__tvoc_index(hass: HomeAssistant, mock_sensors):
+    """Test transform indoor tVOC values to IAQ points."""
+    entity_id = "sensor.test_monitored"
+
+    controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
+
+    assert controller._tvoc_index is None
+
+    controller = Iaquk(hass, "test", "Test", {CONF_TVOC: entity_id})
+
+    for i, value in enumerate([1.01, 1.0, 0.49, 0.29, 0.09]):
+        hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
+        assert controller._tvoc_index == i + 1
+
+    for i, value in enumerate([1.01, 0.5, 0.3, 0.1, 0.09]):
+        hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
+        assert controller._tvoc_index == i + 1
+
+
+async def test__pm_index(hass: HomeAssistant, mock_sensors):
+    """Test transform indoor particulate matters values to IAQ points."""
+    entity_id = "sensor.test_monitored"
+
+    controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
+
+    assert controller._pm_index is None
+
+    controller = Iaquk(hass, "test", "Test", {CONF_PM: []})
+
+    assert controller._pm_index is None
+
+    controller = Iaquk(hass, "test", "Test", {CONF_PM: entity_id})
+
+    with raises(ValueError):
+        assert controller._pm_index
+
+    controller = Iaquk(hass, "test", "Test", {CONF_PM: [entity_id]})
+
+    for i, value in enumerate([0.065, 0.064, 0.053, 0.041, 0.023]):
+        hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
+        assert controller._pm_index == i + 1
+
+    for i, value in enumerate([0.065, 0.054, 0.042, 0.024, 0.023]):
+        hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
+        assert controller._pm_index == i + 1
+
+
+async def test__no2_index(hass: HomeAssistant, mock_sensors):
+    """Test transform indoor NO2 values to IAQ points."""
+    entity_id = "sensor.test_monitored"
+
+    controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
+
+    assert controller._no2_index is None
+
+    controller = Iaquk(hass, "test", "Test", {CONF_NO2: entity_id})
+
+    for i, value in enumerate([0.41, 0.4, 0.19]):
+        hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
+        assert controller._no2_index == i * 2 + 1
+
+    hass.states.async_set(entity_id, 0.2, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
+    assert controller._no2_index == 3
+
+
+async def test__co_index(hass: HomeAssistant, mock_sensors):
+    """Test transform indoor CO values to IAQ points."""
+    entity_id = "sensor.test_monitored"
+
+    controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
+
+    assert controller._co_index is None
+
+    controller = Iaquk(hass, "test", "Test", {CONF_CO: entity_id})
+
+    for i, value in enumerate([7.1, 7, 0.9]):
+        hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
+        assert controller._co_index == i * 2 + 1
+
+    hass.states.async_set(entity_id, 1, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
+    assert controller._co_index == 3
+
+
+async def test__hcho_index(hass: HomeAssistant, mock_sensors):
+    """Test transform indoor Formaldehyde (HCHO) values to IAQ points."""
+    entity_id = "sensor.test_monitored"
+
+    controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
+
+    assert controller._hcho_index is None
+
+    controller = Iaquk(hass, "test", "Test", {CONF_HCHO: entity_id})
+
+    for i, value in enumerate([0.201, 0.20, 0.10, 0.05, 0.019]):
+        hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
+        assert controller._hcho_index == i + 1
+
+    for i, value in enumerate([0.201, 0.101, 0.051, 0.02, 0.019]):
+        hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
+        assert controller._hcho_index == i + 1
+
+
+async def test__radon_index(hass: HomeAssistant, mock_sensors):
+    """Test transform indoor Radon (Rn) values to IAQ points."""
+    entity_id = "sensor.test_monitored"
+
+    controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
+
+    assert controller._radon_index is None
+
+    controller = Iaquk(hass, "test", "Test", {CONF_RADON: entity_id})
+
+    hass.states.async_set(entity_id, 101, {ATTR_UNIT_OF_MEASUREMENT: "Bq/m3"})
+    assert controller._radon_index == 1
+
+    hass.states.async_set(entity_id, 100, {ATTR_UNIT_OF_MEASUREMENT: "Bq/m3"})
+    assert controller._radon_index == 2
+
+    hass.states.async_set(entity_id, 20, {ATTR_UNIT_OF_MEASUREMENT: "Bq/m3"})
+    assert controller._radon_index == 2
+
+    hass.states.async_set(entity_id, 19, {ATTR_UNIT_OF_MEASUREMENT: "Bq/m3"})
+    assert controller._radon_index == 3
+
+    hass.states.async_set(entity_id, 1, {ATTR_UNIT_OF_MEASUREMENT: "Bq/m3"})
+    assert controller._radon_index == 3
+
+    hass.states.async_set(entity_id, 0, {ATTR_UNIT_OF_MEASUREMENT: "Bq/m3"})
+    assert controller._radon_index == 5
