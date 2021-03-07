@@ -263,15 +263,20 @@ class Iaquk:
 
     def _get_number_state(
         self, entity_id, entity_unit=None, source_type="", mweight=None
-    ) -> float:
+    ) -> Optional[float]:
         """Convert value to number."""
         target_unit = None
         if entity_unit is not None and not isinstance(entity_unit, dict):
             entity_unit = {entity_unit: 1}
 
         entity = self._hass.states.get(entity_id)
+        if entity is None:
+            _LOGGER.warning("Entity %s not found", entity_id)
+            return None
         if not isinstance(entity, State):  # pragma: no cover
-            raise ValueError("State must be instance of class State")
+            _LOGGER.warning("State of entity %s be instance of class State", entity_id)
+            return None
+
         value = entity.state
         unit = entity.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
         _LOGGER.debug(
@@ -281,19 +286,23 @@ class Iaquk:
             value,
             (unit if unit and self._has_state(value) else ""),
         )
-
         if not self._has_state(value):
-            raise ValueError("State is unknown")
+            _LOGGER.debug("State of entity %s is unknown", entity_id)
+            return None
 
         if entity_unit is not None:
             target_unit = next(iter(entity_unit))
             if unit not in entity_unit:
                 # pylint: disable=R1705
                 if mweight is None:
-                    raise ValueError(
-                        'Entity %s has inappropriate "%s" units '
-                        "for %s source. Ignored." % (entity_id, unit, source_type)
+                    _LOGGER.debug(
+                        'Entity %s has inappropriate "%s" '
+                        "units for %s source. Ignored.",
+                        entity_id,
+                        unit,
+                        source_type,
                     )
+                    return None
                 entity_unit = entity_unit.copy()
                 if "ppb" in (unit, target_unit):
                     mweight /= 1000
@@ -319,13 +328,14 @@ class Iaquk:
     def _temperature_index(self) -> Optional[int]:
         """Transform indoor temperature values to IAQ points."""
         entity_id = self._sources.get(CONF_TEMPERATURE)
-
         if entity_id is None:
             return None
 
-        entity = self._hass.states.get(entity_id)
         value = self._get_number_state(entity_id, source_type=CONF_TEMPERATURE)
+        if value is None:
+            return None
 
+        entity = self._hass.states.get(entity_id)
         entity_unit = entity.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
         if entity_unit not in (TEMP_CELSIUS, TEMP_FAHRENHEIT):
             raise ValueError(
@@ -350,11 +360,12 @@ class Iaquk:
     def _humidity_index(self) -> Optional[int]:
         """Transform indoor humidity values to IAQ points."""
         entity_id = self._sources.get(CONF_HUMIDITY)
-
         if entity_id is None:
             return None
 
         value = self._get_number_state(entity_id, PERCENTAGE, CONF_HUMIDITY)
+        if value is None:
+            return None
 
         index = 1
         if 40 <= value <= 60:  # %
@@ -371,13 +382,14 @@ class Iaquk:
     def _co2_index(self) -> Optional[int]:
         """Transform indoor eCO2 values to IAQ points."""
         entity_id = self._sources.get(CONF_CO2)
-
         if entity_id is None:
             return None
 
         value = self._get_number_state(
             entity_id, UNIT_PPM, CONF_CO2, mweight=MWEIGTH_CO2
         )
+        if value is None:
+            return None
 
         index = 1
         if value <= 600:  # ppm
@@ -394,13 +406,14 @@ class Iaquk:
     def _tvoc_index(self) -> Optional[int]:
         """Transform indoor tVOC values to IAQ points."""
         entity_id = self._sources.get(CONF_TVOC)
-
         if entity_id is None:
             return None
 
         value = self._get_number_state(
             entity_id, UNIT_PPB, CONF_TVOC, mweight=MWEIGTH_TVOC
         )
+        if value is None:
+            return None
 
         index = 1
         if value <= 24:  # ppb
@@ -417,14 +430,18 @@ class Iaquk:
     def _pm_index(self) -> Optional[int]:
         """Transform indoor particulate matters values to IAQ points."""
         entity_ids = self._sources.get(CONF_PM)
-
         if entity_ids is None or entity_ids == []:
             return None
 
         values = []
         for eid in entity_ids:
             val = self._get_number_state(eid, UNIT_UGM3, CONF_PM)
+            if val is None:
+                continue
             values.append(val)
+
+        if not values:
+            return None
 
         value = sum(values)
         index = 1
@@ -442,13 +459,14 @@ class Iaquk:
     def _no2_index(self) -> Optional[int]:
         """Transform indoor NO2 values to IAQ points."""
         entity_id = self._sources.get(CONF_NO2)
-
         if entity_id is None:
             return None
 
         value = self._get_number_state(
             entity_id, UNIT_PPB, CONF_NO2, mweight=MWEIGTH_NO2
         )
+        if value is None:
+            return None
 
         index = 1
         if value <= 106:  # ppb
@@ -461,11 +479,12 @@ class Iaquk:
     def _co_index(self) -> Optional[int]:
         """Transform indoor CO values to IAQ points."""
         entity_id = self._sources.get(CONF_CO)
-
         if entity_id is None:
             return None
 
         value = self._get_number_state(entity_id, UNIT_PPB, CONF_CO, mweight=MWEIGTH_CO)
+        if value is None:
+            return None
 
         index = 1
         if value <= 785.7:  # ppb
@@ -478,13 +497,14 @@ class Iaquk:
     def _hcho_index(self) -> Optional[int]:
         """Transform indoor Formaldehyde (HCHO) values to IAQ points."""
         entity_id = self._sources.get(CONF_HCHO)
-
         if entity_id is None:
             return None
 
         value = self._get_number_state(
             entity_id, UNIT_PPB, CONF_HCHO, mweight=MWEIGTH_HCHO
         )
+        if value is None:
+            return None
 
         index = 1
         if value <= 16:  # ppb
@@ -501,11 +521,12 @@ class Iaquk:
     def _radon_index(self):
         """Transform indoor Radon (Rn) values to IAQ points."""
         entity_id = self._sources.get(CONF_RADON)
-
         if entity_id is None:
             return None
 
         value = self._get_number_state(entity_id, "Bq/m3")
+        if value is None:
+            return None
 
         index = 1
         if value == 0:  # Bq/m3

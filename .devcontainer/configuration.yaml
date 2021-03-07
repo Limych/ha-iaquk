@@ -9,12 +9,31 @@ logger:
 # debugpy:
 
 sensor:
-  - platform: demo
+  - platform: template
+    sensors:
+      environment_temperature:
+        value_template: "{{ 21.71 }}"
+        unit_of_measurement: "°C"
+      environment_humidity:
+        value_template: "{{ 39.47 }}"
+        unit_of_measurement: "%"
+      co2sensor_mhz19b_carbondioxide:
+        value_template: "{{ 770 }}"
+        unit_of_measurement: "ppm"
+      sds011_sds0x1_pm2_5:
+        value_template: "{{ 2.6 }}"
+        unit_of_measurement: "µg/m³"
+      sds011_sds0x1_pm10:
+        value_template: "{{ 5.1 }}"
+        unit_of_measurement: "µg/m³"
+
 
 iaquk:
-  kitchen:
+  livingroom:
     sources:
-      temperature: sensor.outside_temperature
-      humidity: sensor.outside_humidity
-      co2: sensor.kitchen_eco2
-      tvoc: sensor.kitchen_tvoc
+      temperature: sensor.environment_temperature
+      humidity: sensor.environment_humidity
+      co2: sensor.co2sensor_mhz19b_carbondioxide
+      pm:
+        - sensor.sds011_sds0x1_pm25
+        - sensor.sds011_sds0x1_pm10

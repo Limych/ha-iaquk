@@ -190,16 +190,16 @@ async def test__get_number_state(hass: HomeAssistant, mock_sensors):
     }
     controller = Iaquk(hass, "test", "Test", config)
 
+    assert controller._get_number_state("sensor.nonexistent") is None
+
     assert controller._get_number_state(entity_id) == 29.82
-    with raises(ValueError):
-        controller._get_number_state(entity_id, "")
+    assert controller._get_number_state(entity_id, "") is None
     assert round(controller._get_number_state(entity_id, "", mweight=1), 2) == 729.10
     assert controller._get_number_state(entity_id, "ppb", mweight=1) == 729099
 
     hass.states.async_set(entity_id, STATE_UNKNOWN)
     #
-    with raises(ValueError):
-        controller._get_number_state(entity_id)
+    assert controller._get_number_state(entity_id, "") is None
 
     hass.states.async_set(entity_id, 12.5, {ATTR_UNIT_OF_MEASUREMENT: "ppm"})
     #
@@ -238,8 +238,7 @@ async def test__humidity_index(hass: HomeAssistant, mock_sensors):
     controller = Iaquk(hass, "test", "Test", {CONF_HUMIDITY: entity_id})
 
     hass.states.async_set(entity_id, 12.5, {ATTR_UNIT_OF_MEASUREMENT: TEMP_CELSIUS})
-    with raises(ValueError):
-        _ = controller._humidity_index
+    assert controller._humidity_index is None
 
     for i, value in enumerate([9.9, 19.9, 29.9, 39.9, 40]):
         hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: PERCENTAGE})
@@ -255,6 +254,10 @@ async def test__co2_index(hass: HomeAssistant, mock_sensors):
     entity_id = "sensor.test_monitored"
 
     controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
+
+    assert controller._co2_index is None
+
+    controller = Iaquk(hass, "test", "Test", {CONF_CO2: "sensor.nonexistent"})
 
     assert controller._co2_index is None
 
@@ -274,6 +277,10 @@ async def test__tvoc_index(hass: HomeAssistant, mock_sensors):
     entity_id = "sensor.test_monitored"
 
     controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
+
+    assert controller._tvoc_index is None
+
+    controller = Iaquk(hass, "test", "Test", {CONF_TVOC: "sensor.nonexistent"})
 
     assert controller._tvoc_index is None
 
@@ -300,10 +307,9 @@ async def test__pm_index(hass: HomeAssistant, mock_sensors):
 
     assert controller._pm_index is None
 
-    controller = Iaquk(hass, "test", "Test", {CONF_PM: entity_id})
+    controller = Iaquk(hass, "test", "Test", {CONF_PM: ["sensor.nonexistent"]})
 
-    with raises(ValueError):
-        assert controller._pm_index
+    assert controller._pm_index is None
 
     controller = Iaquk(hass, "test", "Test", {CONF_PM: [entity_id]})
 
@@ -321,6 +327,10 @@ async def test__no2_index(hass: HomeAssistant, mock_sensors):
     entity_id = "sensor.test_monitored"
 
     controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
+
+    assert controller._no2_index is None
+
+    controller = Iaquk(hass, "test", "Test", {CONF_NO2: "sensor.nonexistent"})
 
     assert controller._no2_index is None
 
@@ -342,6 +352,10 @@ async def test__co_index(hass: HomeAssistant, mock_sensors):
 
     assert controller._co_index is None
 
+    controller = Iaquk(hass, "test", "Test", {CONF_CO: "sensor.nonexistent"})
+
+    assert controller._co_index is None
+
     controller = Iaquk(hass, "test", "Test", {CONF_CO: entity_id})
 
     for i, value in enumerate([7.1, 7, 0.9]):
@@ -357,6 +371,10 @@ async def test__hcho_index(hass: HomeAssistant, mock_sensors):
     entity_id = "sensor.test_monitored"
 
     controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
+
+    assert controller._hcho_index is None
+
+    controller = Iaquk(hass, "test", "Test", {CONF_HCHO: "sensor.nonexistent"})
 
     assert controller._hcho_index is None
 
@@ -376,6 +394,10 @@ async def test__radon_index(hass: HomeAssistant, mock_sensors):
     entity_id = "sensor.test_monitored"
 
     controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
+
+    assert controller._radon_index is None
+
+    controller = Iaquk(hass, "test", "Test", {CONF_RADON: "sensor.nonexistent"})
 
     assert controller._radon_index is None
 
