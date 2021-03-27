@@ -13,7 +13,7 @@
 
 _This component allows you to evaluate the air quality in any room, using data from various sensors installed there. Such as temperature, humidity, carbon dioxide sensors, etc._
 
-The index is calculating in accordance with the [IAQ UK organization methodology](https://github.com/Limych/ha-iaquk/blob/master/IAQ_Rating_Index.pdf).
+The index is calculating in accordance with the [IAQ UK organization methodology](https://github.com/Limych/ha-iaquk/blob/dev/IAQ_Rating_Index.pdf).
 
 ![][exampleimg]
 
@@ -46,7 +46,7 @@ I put a lot of work into making this repo and component available and updated to
 [commits]: https://github.com/Limych/ha-iaquk/commits/master
 [hacs-shield]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=popout
 [hacs]: https://hacs.xyz
-[exampleimg]: https://github.com/Limych/ha-iaquk/raw/master/iaquk.jpg
+[exampleimg]: https://github.com/Limych/ha-iaquk/raw/dev/iaquk.jpg
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=popout
 [forum]: https://community.home-assistant.io/t/indoor-air-quality-sensor-component/160474
 [license]: https://github.com/Limych/ha-iaquk/blob/main/LICENSE

@@ -204,7 +204,7 @@ SOFTWARE.
 [commits]: https://github.com/Limych/ha-iaquk/commits/master
 [hacs-shield]: https://img.shields.io/badge/HACS-Default-orange.svg?style=popout
 [hacs]: https://hacs.xyz
-[exampleimg]: https://github.com/Limych/ha-iaquk/raw/master/iaquk.jpg
+[exampleimg]: https://github.com/Limych/ha-iaquk/raw/dev/iaquk.jpg
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=popout
 [forum]: https://community.home-assistant.io/t/indoor-air-quality-sensor-component/160474
 [license]: https://github.com/Limych/ha-iaquk/blob/main/LICENSE
