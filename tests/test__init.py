@@ -1,7 +1,6 @@
 """Test integration setup process."""
 # pylint: disable=redefined-outer-name,protected-access
 
-import pytest
 from homeassistant.const import (
     ATTR_UNIT_OF_MEASUREMENT,
     PERCENTAGE,
@@ -16,6 +15,7 @@ from pytest import raises
 from pytest_homeassistant_custom_component.common import assert_setup_component
 
 from custom_components.iaquk import (
+    ATTR_SOURCE_INDEX_TPL,
     ATTR_SOURCES_SET,
     ATTR_SOURCES_USED,
     CONF_CO,
@@ -39,8 +39,7 @@ from custom_components.iaquk import (
 )
 
 
-@pytest.fixture()
-async def mock_sensors(hass: HomeAssistant):
+async def async_mock_sensors(hass: HomeAssistant):
     """Mock sensor entity for tests."""
     assert await async_setup_component(
         hass,
@@ -62,6 +61,7 @@ async def mock_sensors(hass: HomeAssistant):
             }
         },
     )
+    await hass.async_block_till_done()
 
 
 async def test__deslugify():
@@ -110,8 +110,10 @@ async def test_controller_init(hass: HomeAssistant):
     assert controller.state_attributes == expected_attributes
 
 
-async def test_update(hass: HomeAssistant, mock_sensors):
+async def test_update(hass: HomeAssistant):
     """Test update index state."""
+    await async_mock_sensors(hass)
+
     entity_id = "sensor.test_monitored"
     config = {
         CONF_TEMPERATURE: entity_id,
@@ -128,6 +130,9 @@ async def test_update(hass: HomeAssistant, mock_sensors):
     expected_attributes = {
         ATTR_SOURCES_SET: 3,
         ATTR_SOURCES_USED: 3,
+        ATTR_SOURCE_INDEX_TPL.format("temperature"): 4,
+        ATTR_SOURCE_INDEX_TPL.format("humidity"): 5,
+        ATTR_SOURCE_INDEX_TPL.format("co2"): 4,
     }
 
     assert controller.iaq_index == 56
@@ -143,8 +148,10 @@ async def test_update(hass: HomeAssistant, mock_sensors):
         ATTR_SOURCES_SET: 1,
         ATTR_SOURCES_USED: 1,
     }
+    attr_temp = ATTR_SOURCE_INDEX_TPL.format("temperature")
 
     hass.states.async_set(entity_id, 18, {ATTR_UNIT_OF_MEASUREMENT: TEMP_CELSIUS})
+    expected_attributes[attr_temp] = 5
     controller.update()
 
     assert controller.iaq_index == 65
@@ -152,6 +159,7 @@ async def test_update(hass: HomeAssistant, mock_sensors):
     assert controller.state_attributes == expected_attributes
 
     hass.states.async_set(entity_id, 16, {ATTR_UNIT_OF_MEASUREMENT: TEMP_CELSIUS})
+    expected_attributes[attr_temp] = 3
     controller.update()
 
     assert controller.iaq_index == 39
@@ -159,6 +167,7 @@ async def test_update(hass: HomeAssistant, mock_sensors):
     assert controller.state_attributes == expected_attributes
 
     hass.states.async_set(entity_id, 15, {ATTR_UNIT_OF_MEASUREMENT: TEMP_CELSIUS})
+    expected_attributes[attr_temp] = 2
     controller.update()
 
     assert controller.iaq_index == 26
@@ -166,6 +175,7 @@ async def test_update(hass: HomeAssistant, mock_sensors):
     assert controller.state_attributes == expected_attributes
 
     hass.states.async_set(entity_id, 14, {ATTR_UNIT_OF_MEASUREMENT: TEMP_CELSIUS})
+    expected_attributes[attr_temp] = 1
     controller.update()
 
     assert controller.iaq_index == 13
@@ -182,8 +192,10 @@ async def test__has_state():
     assert Iaquk._has_state("") is True
 
 
-async def test__get_number_state(hass: HomeAssistant, mock_sensors):
+async def test__get_number_state(hass: HomeAssistant):
     """Test state conversion to number."""
+    await async_mock_sensors(hass)
+
     entity_id = "sensor.test_monitored"
     config = {
         CONF_TEMPERATURE: entity_id,
@@ -206,8 +218,10 @@ async def test__get_number_state(hass: HomeAssistant, mock_sensors):
     assert round(controller._get_number_state(entity_id, "", mweight=10), 2) == 5.11
 
 
-async def test__temperature_index(hass: HomeAssistant, mock_sensors):
+async def test__temperature_index(hass: HomeAssistant):
     """Test transform indoor temperature values to IAQ points."""
+    await async_mock_sensors(hass)
+
     entity_id = "sensor.test_monitored"
 
     controller = Iaquk(hass, "test", "Test", {CONF_HUMIDITY: entity_id})
@@ -227,8 +241,10 @@ async def test__temperature_index(hass: HomeAssistant, mock_sensors):
         assert controller._temperature_index == i + 1
 
 
-async def test__humidity_index(hass: HomeAssistant, mock_sensors):
+async def test__humidity_index(hass: HomeAssistant):
     """Test transform indoor humidity values to IAQ points."""
+    await async_mock_sensors(hass)
+
     entity_id = "sensor.test_monitored"
 
     controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
@@ -249,8 +265,10 @@ async def test__humidity_index(hass: HomeAssistant, mock_sensors):
         assert controller._humidity_index == i + 1
 
 
-async def test__co2_index(hass: HomeAssistant, mock_sensors):
+async def test__co2_index(hass: HomeAssistant):
     """Test transform indoor eCO2 values to IAQ points."""
+    await async_mock_sensors(hass)
+
     entity_id = "sensor.test_monitored"
 
     controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
@@ -272,8 +290,10 @@ async def test__co2_index(hass: HomeAssistant, mock_sensors):
         assert controller._co2_index == i + 1
 
 
-async def test__tvoc_index(hass: HomeAssistant, mock_sensors):
+async def test__tvoc_index(hass: HomeAssistant):
     """Test transform indoor tVOC values to IAQ points."""
+    await async_mock_sensors(hass)
+
     entity_id = "sensor.test_monitored"
 
     controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
@@ -295,8 +315,10 @@ async def test__tvoc_index(hass: HomeAssistant, mock_sensors):
         assert controller._tvoc_index == i + 1
 
 
-async def test__pm_index(hass: HomeAssistant, mock_sensors):
+async def test__pm_index(hass: HomeAssistant):
     """Test transform indoor particulate matters values to IAQ points."""
+    await async_mock_sensors(hass)
+
     entity_id = "sensor.test_monitored"
 
     controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
@@ -322,8 +344,10 @@ async def test__pm_index(hass: HomeAssistant, mock_sensors):
         assert controller._pm_index == i + 1
 
 
-async def test__no2_index(hass: HomeAssistant, mock_sensors):
+async def test__no2_index(hass: HomeAssistant):
     """Test transform indoor NO2 values to IAQ points."""
+    await async_mock_sensors(hass)
+
     entity_id = "sensor.test_monitored"
 
     controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
@@ -344,8 +368,10 @@ async def test__no2_index(hass: HomeAssistant, mock_sensors):
     assert controller._no2_index == 3
 
 
-async def test__co_index(hass: HomeAssistant, mock_sensors):
+async def test__co_index(hass: HomeAssistant):
     """Test transform indoor CO values to IAQ points."""
+    await async_mock_sensors(hass)
+
     entity_id = "sensor.test_monitored"
 
     controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
@@ -366,8 +392,10 @@ async def test__co_index(hass: HomeAssistant, mock_sensors):
     assert controller._co_index == 3
 
 
-async def test__hcho_index(hass: HomeAssistant, mock_sensors):
+async def test__hcho_index(hass: HomeAssistant):
     """Test transform indoor Formaldehyde (HCHO) values to IAQ points."""
+    await async_mock_sensors(hass)
+
     entity_id = "sensor.test_monitored"
 
     controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
@@ -389,8 +417,10 @@ async def test__hcho_index(hass: HomeAssistant, mock_sensors):
         assert controller._hcho_index == i + 1
 
 
-async def test__radon_index(hass: HomeAssistant, mock_sensors):
+async def test__radon_index(hass: HomeAssistant):
     """Test transform indoor Radon (Rn) values to IAQ points."""
+    await async_mock_sensors(hass)
+
     entity_id = "sensor.test_monitored"
 
     controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})

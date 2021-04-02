@@ -49,6 +49,7 @@ CONF_RADON = "radon"
 # Attributes
 ATTR_SOURCES_SET = "sources_set"
 ATTR_SOURCES_USED = "sources_used"
+ATTR_SOURCE_INDEX_TPL = "{}_index"
 
 
 LEVEL_EXCELLENT = "Excellent"
