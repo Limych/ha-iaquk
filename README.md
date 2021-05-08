@@ -8,6 +8,7 @@
 
 [![hacs][hacs-shield]][hacs]
 [![Project Maintenance][maintenance-shield]][user_profile]
+[![Support me on Patreon][patreon-shield]][patreon]
 
 [![Community Forum][forum-shield]][forum]
 
@@ -217,3 +218,5 @@ SOFTWARE.
 [report_bug]: https://github.com/Limych/ha-iaquk/issues/new?template=bug_report.md
 [suggest_idea]: https://github.com/Limych/ha-iaquk/issues/new?template=feature_request.md
 [contributors]: https://github.com/Limych/ha-iaquk/graphs/contributors
+[patreon-shield]: https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.vercel.app%2Fapi%3Fusername%3DLimych%26type%3Dpatrons&style=popout
+[patreon]: https://www.patreon.com/join/limych
