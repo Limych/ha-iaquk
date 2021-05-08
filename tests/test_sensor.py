@@ -28,7 +28,7 @@ async def test_entity_initialization(hass: HomeAssistant):
     controller = Iaquk(hass, "test", "Test", {"": "sensor.test_monitored"})
     expected_attributes = {"sources_set": 1, "sources_used": 0}
 
-    entity = IaqukSensor(hass, controller, SENSOR_INDEX)
+    entity = IaqukSensor(controller, SENSOR_INDEX)
 
     assert entity.unique_id == "test_iaq_index"
     assert entity.name == "Test Indoor Air Quality Index"
@@ -39,7 +39,7 @@ async def test_entity_initialization(hass: HomeAssistant):
     assert entity.unit_of_measurement == "IAQI"
     assert entity.state_attributes == expected_attributes
 
-    entity = IaqukSensor(hass, controller, SENSOR_LEVEL)
+    entity = IaqukSensor(controller, SENSOR_LEVEL)
 
     assert entity.unique_id == "test_iaq_level"
     assert entity.name == "Test Indoor Air Quality Level"
@@ -61,7 +61,7 @@ async def test_entity_initialization(hass: HomeAssistant):
     for lvl, icon in levels.items():
         # pylint: disable=cell-var-from-loop
         with patch.object(IaqukSensor, "state", new_callable=lambda: lvl):
-            entity = IaqukSensor(hass, controller, SENSOR_LEVEL)
+            entity = IaqukSensor(controller, SENSOR_LEVEL)
             assert entity.state == lvl
             assert entity.icon == icon
 

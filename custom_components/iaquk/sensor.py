@@ -48,7 +48,7 @@ async def async_setup_platform(
     sensors = []
     for sensor_type in discovery_info[CONF_SENSORS]:
         _LOGGER.debug("Initialize sensor %s for controller %s", sensor_type, object_id)
-        sensors.append(IaqukSensor(hass, controller, sensor_type))
+        sensors.append(IaqukSensor(controller, sensor_type))
 
     async_add_entities(sensors, True)
 
@@ -56,16 +56,15 @@ async def async_setup_platform(
 class IaqukSensor(Entity):
     """IAQ UK sensor."""
 
-    def __init__(self, hass: HomeAssistant, controller, sensor_type: str):
+    def __init__(self, controller, sensor_type: str):
         """Initialize sensor."""
-        self._hass = hass
         self._controller = controller
         self._sensor_type = sensor_type
         self._unique_id = f"{self._controller.unique_id}_{self._sensor_type}"
         self._name = "{} {}".format(self._controller.name, SENSORS[self._sensor_type])
 
         self.entity_id = async_generate_entity_id(
-            ENTITY_ID_FORMAT, self._unique_id, hass=hass
+            ENTITY_ID_FORMAT, self._unique_id, hass=controller.hass
         )
 
     async def async_added_to_hass(self):
