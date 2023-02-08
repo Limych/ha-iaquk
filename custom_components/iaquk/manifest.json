@@ -1,7 +1,7 @@
 {
     "domain": "iaquk",
     "name": "Indoor Air Quality UK Index",
-    "version": "1.6.3-alpha",
+    "version": "1.6.3",
     "documentation": "https://github.com/Limych/ha-iaquk",
     "issue_tracker": "https://github.com/Limych/ha-iaquk/issues",
     "dependencies": [],
