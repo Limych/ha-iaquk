@@ -3,12 +3,20 @@ name: Lock Inactive Threads
 on:
   schedule:
     - cron: '0 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: lock
 
 jobs:
   lock:
     runs-on: ubuntu-latest
     steps:
-      - uses: dessant/lock-threads@v3
+      - uses: dessant/lock-threads@v4
         with:
           github-token: ${{ github.token }}
           issue-lock-inactive-days: 30

@@ -7,8 +7,8 @@ on:
       - "[v0-9]+.[0-9]+*"
 
 jobs:
-  release_zip_file:
-    name: "Prepare release asset"
+  release:
+    name: "Publish new release"
     runs-on: ubuntu-latest
     steps:
       - name: "Check out repository"
@@ -17,7 +17,7 @@ jobs:
       - working-directory: ./custom_components
         run: |
           echo "package=$(ls -F | grep \/$ | sed -n "s/\///g;1p")" >> $GITHUB_ENV
-          echo "release_version=$(git describe --abbrev=0 | sed s/v//)" >> $GITHUB_ENV
+          echo "release_version=$(git describe --tags | sed s/v//)" >> $GITHUB_ENV
       - working-directory: ./custom_components
         run: |
           echo "basedir=$(pwd)/${{ env.package }}" >> $GITHUB_ENV
@@ -34,18 +34,15 @@ jobs:
         run: |
           zip ${{ env.package }}.zip -r ./
 
-      - name: "Upload zip to release"
+      - name: "Release"
         if: env.release_version != '' && success()
-        uses: svenstaro/upload-release-action@v2
+        uses: softprops/action-gh-release@v1
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ env.basedir }}/${{ env.package }}.zip
-          asset_name: ${{ env.package }}.zip
-          tag: ${{ env.release_version }}
-          overwrite: true
+          files: ${{ env.basedir }}/${{ env.package }}.zip
 
-  releasenotes:
-    name: "Prepare releasenotes"
+  release-notes:
+    name: "Compose release notes"
+    needs: release
     runs-on: ubuntu-latest
     steps:
       - name: "Check out repository"
@@ -53,15 +50,16 @@ jobs:
 
       - working-directory: ./custom_components
         run: |
-          echo "release_version=$(git describe --abbrev=0 | sed s/v//)" >> $GITHUB_ENV
+          echo "release_version=$(git describe --tags | sed s/v//)" >> $GITHUB_ENV
 
       - name: "Set up Python"
         if: env.release_version != '' && success()
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9
 
       - name: "Cache pip"
+        if: env.release_version != '' && success()
         uses: actions/cache@v3
         with:
           # This path is specific to Ubuntu

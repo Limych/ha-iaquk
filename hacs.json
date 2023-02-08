@@ -2,6 +2,5 @@
     "name": "Indoor Air Quality UK Index",
     "domains": ["sensor"],
     "hacs": "1.6.0",
-    "iot_class": "Assumed State",
-    "homeassistant": "0.118.0"
+    "homeassistant": "2022.10.0"
 }
