@@ -1,8 +1,6 @@
 """Test sensor setup."""
 from unittest.mock import patch
 
-from homeassistant.core import HomeAssistant
-from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import assert_setup_component
 
 from custom_components.iaquk import Iaquk
@@ -21,6 +19,8 @@ from custom_components.iaquk.const import (
     LEVEL_POOR,
 )
 from custom_components.iaquk.sensor import SENSOR_INDEX, SENSOR_LEVEL, IaqukSensor
+from homeassistant.core import HomeAssistant
+from homeassistant.setup import async_setup_component
 
 
 async def test_entity_initialization(hass: HomeAssistant):

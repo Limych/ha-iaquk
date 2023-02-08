@@ -1,16 +1,6 @@
 """Test integration setup process."""
 # pylint: disable=redefined-outer-name,protected-access
 
-from homeassistant.const import (
-    ATTR_UNIT_OF_MEASUREMENT,
-    PERCENTAGE,
-    STATE_UNAVAILABLE,
-    STATE_UNKNOWN,
-    TEMP_CELSIUS,
-    TEMP_FAHRENHEIT,
-)
-from homeassistant.core import HomeAssistant
-from homeassistant.setup import async_setup_component
 from pytest import raises
 from pytest_homeassistant_custom_component.common import assert_setup_component
 
@@ -37,6 +27,16 @@ from custom_components.iaquk import (
     Iaquk,
     _deslugify,
 )
+from homeassistant.const import (
+    ATTR_UNIT_OF_MEASUREMENT,
+    PERCENTAGE,
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
+    TEMP_CELSIUS,
+    TEMP_FAHRENHEIT,
+)
+from homeassistant.core import HomeAssistant
+from homeassistant.setup import async_setup_component
 
 
 async def async_mock_sensors(hass: HomeAssistant):
