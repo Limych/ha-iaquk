@@ -36,6 +36,7 @@ async def test_entity_initialization(hass: HomeAssistant):
     assert entity.should_poll is True
     assert entity.available is True
     assert entity.state is None
+    assert entity.state_class == "measurement"
     assert entity.icon == ICON_DEFAULT
     assert entity.unit_of_measurement == "IAQI"
     assert entity.extra_state_attributes == expected_attributes
@@ -48,6 +49,7 @@ async def test_entity_initialization(hass: HomeAssistant):
     assert entity.should_poll is True
     assert entity.available is True
     assert entity.state is None
+    assert entity.state_class is None
     assert entity.icon == ICON_FAIR
     assert entity.unit_of_measurement is None
     assert entity.extra_state_attributes == expected_attributes
