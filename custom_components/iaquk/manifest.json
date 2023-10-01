@@ -5,8 +5,8 @@
         "@Limych"
     ],
     "config_flow": false,
-    "documentation": "https://github.com/Limych/ha-iaquk",
     "dependencies": [],
+    "documentation": "https://github.com/Limych/ha-iaquk",
     "iot_class": "calculated",
     "issue_tracker": "https://github.com/Limych/ha-iaquk/issues",
     "requirements": [],
