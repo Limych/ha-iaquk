@@ -3,6 +3,7 @@
 
 from pytest import raises
 from pytest_homeassistant_custom_component.common import assert_setup_component
+from voluptuous import Invalid
 
 from custom_components.iaquk import (
     ATTR_SOURCE_INDEX_TPL,
@@ -18,6 +19,7 @@ from custom_components.iaquk import (
     CONF_SOURCES,
     CONF_TEMPERATURE,
     CONF_TVOC,
+    CONF_VOC_INDEX,
     DOMAIN,
     LEVEL_EXCELLENT,
     LEVEL_FAIR,
@@ -26,6 +28,7 @@ from custom_components.iaquk import (
     LEVEL_POOR,
     Iaquk,
     _deslugify,
+    check_voc_keys,
 )
 from homeassistant.const import (
     ATTR_UNIT_OF_MEASUREMENT,
@@ -62,6 +65,18 @@ async def async_mock_sensors(hass: HomeAssistant):
         },
     )
     await hass.async_block_till_done()
+
+
+async def test_check_voc_keys():
+    """Test check_voc_keys function."""
+    _ = check_voc_keys({})
+    _ = check_voc_keys({CONF_TVOC: "qwe"})
+    _ = check_voc_keys({CONF_VOC_INDEX: "qwe"})
+    _ = check_voc_keys({"zxc": "qwe", CONF_VOC_INDEX: "asd"})
+    _ = check_voc_keys({CONF_TVOC: "qwe", "zxc": "asd"})
+
+    with raises(Invalid):
+        _ = check_voc_keys({CONF_TVOC: "qwe", CONF_VOC_INDEX: "asd"})
 
 
 async def test__deslugify():
@@ -313,6 +328,31 @@ async def test__tvoc_index(hass: HomeAssistant):
     for i, value in enumerate([1.01, 0.5, 0.3, 0.1, 0.09]):
         hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
         assert controller._tvoc_index == i + 1
+
+
+async def test__voc_index_index(hass: HomeAssistant):
+    """Test transform indoor VOC index values to IAQ points."""
+    await async_mock_sensors(hass)
+
+    entity_id = "sensor.test_monitored"
+
+    controller = Iaquk(hass, "test", "Test", {CONF_TEMPERATURE: entity_id})
+
+    assert controller._voc_index_index is None
+
+    controller = Iaquk(hass, "test", "Test", {CONF_VOC_INDEX: "sensor.nonexistent"})
+
+    assert controller._voc_index_index is None
+
+    controller = Iaquk(hass, "test", "Test", {CONF_VOC_INDEX: entity_id})
+
+    for i, value in enumerate([261, 181, 116, 51, 0]):
+        hass.states.async_set(entity_id, value)
+        assert controller._voc_index_index == i + 1
+
+    for i, value in enumerate([500, 260, 180, 115, 50]):
+        hass.states.async_set(entity_id, value)
+        assert controller._voc_index_index == i + 1
 
 
 async def test__pm_index(hass: HomeAssistant):

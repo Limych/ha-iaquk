@@ -13,5 +13,5 @@
         "colorlog==6.7.0",
         "ruff==0.0.291"
     ],
-    "version": "1.6.4"
+    "version": "1.6.5-alpha"
 }

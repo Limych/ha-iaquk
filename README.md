@@ -120,7 +120,15 @@ You can create as many groups as you need. But each group must have an unique na
 > **tvoc**:\
 > _(string) (Optional)_\
 > Room tVOC sensor entity ID.\
-> Required sensor's unit of measurement: ppm, ppb, mg/m<sup>3</sup> or µg/m<sup>3</sup>
+> Required sensor's unit of measurement: ppm, ppb, mg/m<sup>3</sup> or µg/m<sup>3</sup>\
+> *Note:* Only one VOC source are allowed at once: **tvoc** or **voc_index**.
+>
+> **voc_index**:\
+> _(string) (Optional)_\
+> Room VOC sensor entity ID.\
+> Required sensor's unit of measurement: None\
+> Especially for SGP40 and SGP41 gas sensors that return a VOC value as an index from 0 to 500.\
+> *Note:* Only one VOC source are allowed at once: **tvoc** or **voc_index**.
 >
 > **hcho**:\
 > _(string) (Optional)_\

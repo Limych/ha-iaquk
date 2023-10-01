@@ -43,6 +43,7 @@ from .const import (
     CONF_SOURCES,
     CONF_TEMPERATURE,
     CONF_TVOC,
+    CONF_VOC_INDEX,
     DOMAIN,
     LEVEL_EXCELLENT,
     LEVEL_FAIR,
@@ -63,6 +64,18 @@ from .sensor import SENSORS
 
 _LOGGER: Final = logging.getLogger(__name__)
 
+
+def check_voc_keys(conf):
+    """Ensure CONF_TVOC, CONF_VOC_INDEX or none of them are provided."""
+    keys: Final = [CONF_TVOC, CONF_VOC_INDEX]
+    count = sum(param in conf for param in keys)
+    if count > 1:
+        raise vol.Invalid(
+            "You must provide none or only one of the following: " ", ".join(keys)
+        )
+    return conf
+
+
 SOURCES: Final = [
     CONF_TEMPERATURE,
     CONF_HUMIDITY,
@@ -70,6 +83,7 @@ SOURCES: Final = [
     CONF_CO,
     CONF_NO2,
     CONF_TVOC,
+    CONF_VOC_INDEX,
     CONF_HCHO,
     CONF_RADON,
     CONF_PM,
@@ -85,6 +99,7 @@ SOURCES_SCHEMA: Final = vol.All(
         }
     ),
     cv.has_at_least_one_key(*SOURCES),
+    check_voc_keys,
 )
 
 IAQ_SCHEMA: Final = vol.Schema(
@@ -434,6 +449,37 @@ class Iaquk:
         elif value <= 122:  # ppb
             index = 3
         elif value <= 245:  # ppb
+            index = 2
+        return index
+
+    @property
+    def _voc_index_index(self) -> Optional[int]:
+        """Transform indoor VOC index (0-500) values to IAQ points.
+
+        Especially for SGP40 and SGP41 gas sensors:
+            0-50    — Good
+            51-100  — Moderate
+            101-150 — Unhealthy for sensitive peoples
+            151-200 — Unhealthy
+            201-300 — Very unhealthy
+            301-500 — Hazardous
+        """
+        entity_id = self._sources.get(CONF_VOC_INDEX)
+        if entity_id is None:
+            return None
+
+        value = self._get_number_state(entity_id, None, CONF_VOC_INDEX)
+        if value is None:
+            return None
+
+        index = 1
+        if value <= 50:
+            index = 5
+        elif value <= 115:
+            index = 4
+        elif value <= 180:
+            index = 3
+        elif value <= 260:
             index = 2
         return index
 
