@@ -1,5 +1,8 @@
 {
     "name": "Indoor Air Quality UK Index",
-    "hacs": "1.6.0",
-    "homeassistant": "2022.10.0"
+    "filename": "iaquk.zip",
+    "hide_default_branch": true,
+    "homeassistant": "2023.1.0",
+    "render_readme": true,
+    "zip_release": true
 }
