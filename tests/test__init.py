@@ -35,8 +35,7 @@ from homeassistant.const import (
     PERCENTAGE,
     STATE_UNAVAILABLE,
     STATE_UNKNOWN,
-    TEMP_CELSIUS,
-    TEMP_FAHRENHEIT,
+    UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
@@ -137,7 +136,9 @@ async def test_update(hass: HomeAssistant):
     }
     controller = Iaquk(hass, "test", "Test", config)
 
-    hass.states.async_set(entity_id, 17, {ATTR_UNIT_OF_MEASUREMENT: TEMP_CELSIUS})
+    hass.states.async_set(
+        entity_id, 17, {ATTR_UNIT_OF_MEASUREMENT: UnitOfTemperature.CELSIUS}
+    )
     hass.states.async_set(entity_id + "2", 50, {ATTR_UNIT_OF_MEASUREMENT: PERCENTAGE})
     hass.states.async_set(entity_id + "3", 800, {ATTR_UNIT_OF_MEASUREMENT: "ppm"})
     controller.update()
@@ -165,7 +166,9 @@ async def test_update(hass: HomeAssistant):
     }
     attr_temp = ATTR_SOURCE_INDEX_TPL.format("temperature")
 
-    hass.states.async_set(entity_id, 18, {ATTR_UNIT_OF_MEASUREMENT: TEMP_CELSIUS})
+    hass.states.async_set(
+        entity_id, 18, {ATTR_UNIT_OF_MEASUREMENT: UnitOfTemperature.CELSIUS}
+    )
     expected_attributes[attr_temp] = 5
     controller.update()
 
@@ -173,7 +176,9 @@ async def test_update(hass: HomeAssistant):
     assert controller.iaq_level == LEVEL_EXCELLENT
     assert controller.state_attributes == expected_attributes
 
-    hass.states.async_set(entity_id, 16, {ATTR_UNIT_OF_MEASUREMENT: TEMP_CELSIUS})
+    hass.states.async_set(
+        entity_id, 16, {ATTR_UNIT_OF_MEASUREMENT: UnitOfTemperature.CELSIUS}
+    )
     expected_attributes[attr_temp] = 3
     controller.update()
 
@@ -181,7 +186,9 @@ async def test_update(hass: HomeAssistant):
     assert controller.iaq_level == LEVEL_FAIR
     assert controller.state_attributes == expected_attributes
 
-    hass.states.async_set(entity_id, 15, {ATTR_UNIT_OF_MEASUREMENT: TEMP_CELSIUS})
+    hass.states.async_set(
+        entity_id, 15, {ATTR_UNIT_OF_MEASUREMENT: UnitOfTemperature.CELSIUS}
+    )
     expected_attributes[attr_temp] = 2
     controller.update()
 
@@ -189,7 +196,9 @@ async def test_update(hass: HomeAssistant):
     assert controller.iaq_level == LEVEL_POOR
     assert controller.state_attributes == expected_attributes
 
-    hass.states.async_set(entity_id, 14, {ATTR_UNIT_OF_MEASUREMENT: TEMP_CELSIUS})
+    hass.states.async_set(
+        entity_id, 14, {ATTR_UNIT_OF_MEASUREMENT: UnitOfTemperature.CELSIUS}
+    )
     expected_attributes[attr_temp] = 1
     controller.update()
 
@@ -251,7 +260,7 @@ async def test__temperature_index(hass: HomeAssistant):
 
     for i, value in enumerate([57, 59, 60, 63, 67]):
         hass.states.async_set(
-            entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: TEMP_FAHRENHEIT}
+            entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: UnitOfTemperature.FAHRENHEIT}
         )
         assert controller._temperature_index == i + 1
 
@@ -268,7 +277,9 @@ async def test__humidity_index(hass: HomeAssistant):
 
     controller = Iaquk(hass, "test", "Test", {CONF_HUMIDITY: entity_id})
 
-    hass.states.async_set(entity_id, 12.5, {ATTR_UNIT_OF_MEASUREMENT: TEMP_CELSIUS})
+    hass.states.async_set(
+        entity_id, 12.5, {ATTR_UNIT_OF_MEASUREMENT: UnitOfTemperature.CELSIUS}
+    )
     assert controller._humidity_index is None
 
     for i, value in enumerate([9.9, 19.9, 29.9, 39.9, 40]):

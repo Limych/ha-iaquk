@@ -18,10 +18,9 @@ from homeassistant.const import (
     PERCENTAGE,
     STATE_UNAVAILABLE,
     STATE_UNKNOWN,
-    TEMP_CELSIUS,
-    TEMP_FAHRENHEIT,
     TEMPERATURE,
     UNIT_NOT_RECOGNIZED_TEMPLATE,
+    UnitOfTemperature,
 )
 from homeassistant.core import State, callback
 from homeassistant.helpers import discovery
@@ -363,13 +362,15 @@ class Iaquk:
 
         entity = self.hass.states.get(entity_id)
         entity_unit = entity.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
-        if entity_unit not in (TEMP_CELSIUS, TEMP_FAHRENHEIT):
+        if entity_unit not in (UnitOfTemperature.CELSIUS, UnitOfTemperature.FAHRENHEIT):
             raise ValueError(
                 UNIT_NOT_RECOGNIZED_TEMPLATE.format(entity_unit, TEMPERATURE)
             )
 
-        if entity_unit != TEMP_CELSIUS:
-            value = TemperatureConverter.convert(value, entity_unit, TEMP_CELSIUS)
+        if entity_unit != UnitOfTemperature.CELSIUS:
+            value = TemperatureConverter.convert(
+                value, entity_unit, UnitOfTemperature.CELSIUS
+            )
 
         index = 1
         if 18 <= value <= 21:  # °C
