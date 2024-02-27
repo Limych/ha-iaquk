@@ -6,8 +6,8 @@ from typing import Any, Final, Optional
 
 from homeassistant.components.sensor import (
     ENTITY_ID_FORMAT,
-    STATE_CLASS_MEASUREMENT,
     SensorEntity,
+    SensorStateClass,
 )
 from homeassistant.const import CONF_NAME, CONF_SENSORS
 from homeassistant.core import HomeAssistant
@@ -73,7 +73,7 @@ class IaqukSensor(SensorEntity):
         self._attr_unique_id = f"{controller.unique_id}_{sensor_type}"
         self._attr_name = f"{controller.name} {SENSORS[sensor_type]}"
         self._attr_state_class = (
-            STATE_CLASS_MEASUREMENT if sensor_type == SENSOR_INDEX else None
+            SensorStateClass.MEASUREMENT if sensor_type == SENSOR_INDEX else None
         )
         self._attr_device_class = (
             f"{DOMAIN}__level" if sensor_type == SENSOR_LEVEL else None
