@@ -1,0 +1,11 @@
+{
+  "state": {
+    "iaquk__level": {
+      "Excellent": "Erinomainen",
+      "Good": "Hyvä",
+      "Fair": "Kohtalainen",
+      "Poor": "Heikko",
+      "Inadequate": "Erittäin heikko"
+    }
+  }
+}
